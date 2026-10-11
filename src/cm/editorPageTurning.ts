@@ -206,10 +206,9 @@ export function editorPageTurning(values: {
 					distance === 0
 						? Math.abs(dx) <= 8 && dy <= 8
 						: Math.abs(dx) >= distance &&
-							Math.abs(dx) > dy &&
-							(start.left ? dx > 0 : dx < 0);
+							Math.abs(dx) > dy;
 				if (turn) {
-					pending = start.left ? -1 : 1;
+					pending = distance === 0 ? (start.left ? -1 : 1) : (dx < 0 ? -1 : 1);
 					schedule();
 					event.preventDefault();
 				}

@@ -308,7 +308,7 @@ async function run() {
 		await page.mouse.wheel(0, 200);
 		await page.waitForTimeout(200);
 		assert.equal(await page.evaluate(() => reading.view.scrollDOM.scrollTop), lockedTop, "fullscreen lock must block vertical touch and wheel scrolling");
-		await swipe(360, -100);
+		await swipe(50, 100);
 		await page.waitForTimeout(150);
 		assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > lockedTop, "horizontal paging must work while locked");
 		await page.touchscreen.tap(392, 20);
@@ -343,18 +343,26 @@ async function run() {
 				root.scrollTop + (partial ? partial.top - box.top : root.clientHeight)
 			);
 		});
-		await swipe(360, -100);
+		await swipe(50, 100);
 		await page.waitForTimeout(150);
 		assert.equal(
 			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
 			Math.round(nextPageTop),
 		);
-		await swipe(50, 100);
+		await swipe(360, -100);
 		await page.waitForTimeout(150);
 		assert.equal(
 			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
 			0,
 		);
+		for (const [rightStart, leftStart] of [[50, 150], [300, 360]]) {
+			await swipe(rightStart, 100);
+			await page.waitForTimeout(150);
+			assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > 0, "right swipe advances from either half");
+			await swipe(leftStart, -100);
+			await page.waitForTimeout(150);
+			assert.equal(await page.evaluate(() => reading.view.scrollDOM.scrollTop), 0, "left swipe goes back from either half");
+		}
 		await swipe(360, -40);
 		assert.equal(
 			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
@@ -407,7 +415,7 @@ async function run() {
 			reading.setPaging(true, 60);
 			reading.view.scrollDOM.scrollTop = 0;
 		});
-		await swipe(360, -100);
+		await swipe(50, 100);
 		assert.equal(
 			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
 			0,

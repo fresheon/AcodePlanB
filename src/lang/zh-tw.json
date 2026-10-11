@@ -892,5 +892,10 @@
 	"editor-page-turning-info": "僅在唯讀模式下生效。正文左半螢幕右滑翻上一頁，右半螢幕左滑翻下一頁。編輯模式保留點擊編輯和上下捲動。",
 	"editor-page-swipe-distance": "翻頁滑動幅度",
 	"editor-page-swipe-distance-info": "水平滑動至少達到設定的 px 數值才翻頁。設為 0 時，點擊左半螢幕翻上一頁，點擊右半螢幕翻下一頁。",
-	"editor-appearance-paragraph-info": "在文字段落之間增加顯示間距。每次手動換行視為新段；自動換行不增加間距，不修改檔案內容。"
+	"editor-appearance-paragraph-info": "在文字段落之間增加顯示間距。每次手動換行視為新段；自動換行不增加間距，不修改檔案內容。",
+	"editor-selection-color": "選取文字時高亮色",
+	"editor-cursor-color": "游標設定",
+	"editor-cursor-width": "游標粗細",
+	"editor-appearance-top": "上方留白",
+	"editor-appearance-bottom": "下方留白"
 }

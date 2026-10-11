@@ -904,5 +904,10 @@
 	"editor-page-turning": "Page turning",
 	"editor-page-turning-info": "Only active in read-only mode. Swipe right on the left half for the previous page; swipe left on the right half for the next page. Editing keeps normal taps and vertical scrolling.",
 	"editor-page-swipe-distance": "Page swipe distance",
-	"editor-page-swipe-distance-info": "Minimum horizontal swipe distance in px. Set 0 to tap the left/right half for previous/next page."
+	"editor-page-swipe-distance-info": "Minimum horizontal swipe distance in px. Set 0 to tap the left/right half for previous/next page.",
+	"editor-selection-color": "Selected text highlight color",
+	"editor-cursor-color": "Cursor settings",
+	"editor-cursor-width": "Cursor width",
+	"editor-appearance-top": "Top text padding",
+	"editor-appearance-bottom": "Bottom text padding"
 }

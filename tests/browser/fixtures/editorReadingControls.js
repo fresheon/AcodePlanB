@@ -81,6 +81,12 @@ window.setupReading = () => {
 		view,
 		main,
 		pane,
+		setAppearance(values) {
+			view.dispatch({ effects: layout.reconfigure([
+				editorAppearance(values),
+				EditorView.theme({ ".cm-cursor": { borderLeftWidth: `${values.cursorWidth || 2}px` } }),
+			]) });
+		},
 		setLayout(doc, wrap, lineHeight, paragraphSpacing) {
 			view.dispatch({
 				changes: { from: 0, to: view.state.doc.length, insert: doc },

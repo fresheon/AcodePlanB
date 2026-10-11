@@ -55,9 +55,14 @@ const overrides = {
 	editorForegroundColor: "#e6d5c4",
 	editorPaddingLeft: 12.5,
 	editorPaddingRight: 24,
+	editorSelectionColor: "#ffee00",
+	editorCursorColor: "#ff0000",
+	cursorWidth: 3.5,
+	editorPaddingTop: 22,
+	editorPaddingBottom: 18,
 };
 describe("editor appearance persistence", () => {
-	it("retains all four overrides across save, fresh launch, unrelated update and another launch", async () => {
+	it("retains appearance overrides across save, fresh launch, unrelated update and another launch", async () => {
 		const disk = storage();
 		const first = await disk.launch();
 		await first.update(overrides);
@@ -86,7 +91,7 @@ describe("editor appearance persistence", () => {
 			editorPaddingRight: 80,
 		});
 		const defaults = Object.fromEntries(
-			Object.keys(overrides).map((key) => [key, null]),
+			Object.keys(overrides).filter(key => key !== "cursorWidth").map((key) => [key, null]),
 		);
 		await settings.update(defaults);
 		expect((await disk.launch()).value).toMatchObject(defaults);

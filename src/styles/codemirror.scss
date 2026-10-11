@@ -345,8 +345,8 @@ header.tile > .editor-reading-button:not(:disabled) {
   margin: 0;
   border: 0;
   .editor-pane-tabs { display: none; }
-  // A 5px top inset, 12px status row followed by 30px of blank space above the text.
-  .cm-editor { padding-top: 47px; box-sizing: border-box; }
+  // Status bar: 5px top inset + 12px icons + 6px below the icons.
+  .cm-editor { padding-top: calc(23px + var(--editor-padding-top, 30px)); padding-bottom: var(--editor-padding-bottom, 0px); box-sizing: border-box; }
   .editor-pane-content, .editor-container { min-height: 0; flex: 1; }
 }
 
@@ -371,8 +371,11 @@ header.tile > .editor-reading-button:not(:disabled) {
 
 #editor-fullscreen-status {
   position: fixed;
-  top: 5px;
-  left: 8px;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 5px 8px 6px;
+  box-sizing: content-box;
   z-index: 10001;
   height: 12px;
   font-size: 12px;

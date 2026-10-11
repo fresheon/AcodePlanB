@@ -89,7 +89,7 @@ export function editorPageTurning(values: {
 		EditorView.theme({
 			"&.cm-page-turning .cm-scroller": { touchAction: "pan-y" },
 			"&.cm-page-turning .cm-content": {
-				paddingBottom: "var(--cm-page-tail, 0px)",
+				paddingBottom: "calc(var(--editor-content-bottom, 0px) + var(--cm-page-tail, 0px))",
 				userSelect: "none",
 				WebkitUserSelect: "none",
 			},

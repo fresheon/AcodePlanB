@@ -904,5 +904,10 @@
 	"editor-page-turning": "翻页模式",
 	"editor-page-turning-info": "仅在只读模式下生效。正文左半屏右滑翻上一页，右半屏左滑翻下一页。编辑模式保留点击编辑和上下滚动。",
 	"editor-page-swipe-distance": "翻页滑动幅度",
-	"editor-page-swipe-distance-info": "水平滑动至少达到设定的 px 数值才翻页。设为 0 时，点击左半屏翻上一页，点击右半屏翻下一页。"
+	"editor-page-swipe-distance-info": "水平滑动至少达到设定的 px 数值才翻页。设为 0 时，点击左半屏翻上一页，点击右半屏翻下一页。",
+	"editor-selection-color": "选中文字时高亮色",
+	"editor-cursor-color": "光标设置",
+	"editor-cursor-width": "光标粗细",
+	"editor-appearance-top": "上方留白",
+	"editor-appearance-bottom": "下方留白"
 }

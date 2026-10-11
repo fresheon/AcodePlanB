@@ -25,6 +25,10 @@ import { isDeviceDarkTheme } from "./systemConfiguration";
 const nullableEditorSettingValidators = {
 	editorBackgroundColor: isNullableEditorColor,
 	editorForegroundColor: isNullableEditorColor,
+	editorSelectionColor: isNullableEditorColor,
+	editorCursorColor: isNullableEditorColor,
+	editorPaddingTop: isNullableEditorPadding,
+	editorPaddingBottom: isNullableEditorPadding,
 	editorPaddingLeft: isNullableEditorPadding,
 	editorPaddingRight: isNullableEditorPadding,
 };
@@ -160,6 +164,10 @@ class Settings {
 			editorTheme: "one_dark",
 			editorBackgroundColor: null,
 			editorForegroundColor: null,
+			editorSelectionColor: null,
+			editorCursorColor: null,
+			editorPaddingTop: 30,
+			editorPaddingBottom: 0,
 			editorParagraphSpacing: 0,
 			editorPageTurning: false,
 			editorPageSwipeDistance: 60,

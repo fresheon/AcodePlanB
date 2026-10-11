@@ -62,6 +62,33 @@ async function run() {
 		await page.evaluate(() => setupReading());
 		await page.waitForTimeout(150);
 
+		await page.locator("#editor-read-only-toggle").tap();
+		await page.evaluate(() => {
+			reading.setAppearance({ editorSelectionColor: "#ffee00", editorCursorColor: "#ff0000", cursorWidth: 4, editorPaddingTop: 22, editorPaddingBottom: 18 });
+			reading.view.focus();
+			reading.view.dispatch({ selection: { anchor: 2, head: 8 } });
+		});
+		await page.waitForTimeout(150);
+		assert.equal(await page.locator(".cm-selectionBackground").first().evaluate(el => getComputedStyle(el).backgroundColor), "rgb(255, 238, 0)");
+		await page.evaluate(() => reading.view.dispatch({ selection: { anchor: 2 } }));
+		await page.waitForTimeout(150);
+		const cursorStyle = await page.locator(".cm-cursor").first().evaluate(el => ({ color: getComputedStyle(el).borderLeftColor, width: getComputedStyle(el).borderLeftWidth }));
+		assert.equal(cursorStyle.color, "rgb(255, 0, 0)");
+		assert.equal(cursorStyle.width, "4px");
+		await page.locator("#editor-content-fullscreen-toggle").tap();
+		await page.waitForTimeout(150);
+		const margins = await page.evaluate(() => {
+			const status = document.getElementById("editor-fullscreen-status");
+			const bar = status.getBoundingClientRect();
+			const icon = status.querySelector("time").getBoundingClientRect();
+			const scroll = reading.view.scrollDOM.getBoundingClientRect();
+			return { top: scroll.top - bar.bottom, bottom: innerHeight - scroll.bottom, belowIcon: bar.bottom - icon.bottom, aboveIcon: icon.top };
+		});
+		assert.deepEqual(margins, { top: 22, bottom: 18, belowIcon: 6, aboveIcon: 5 });
+		await page.touchscreen.tap(392, 20);
+		await page.evaluate(() => reading.setAppearance({}));
+		await page.waitForTimeout(150);
+
 		// Preserve the visible text anchor, including a page reached in fullscreen.
 		const scrollPosition = () => page.evaluate(() => {
 			const view = reading.view;
@@ -93,7 +120,7 @@ async function run() {
 			await page.waitForTimeout(200);
 			const afterEntry = await scrollPosition();
 			assert.equal(afterEntry.pos, beforeEntry.pos, "entry must retain visible line");
-			assert(Math.abs(afterEntry.offset - beforeEntry.offset) < 1);
+			assert(Math.abs(afterEntry.offset - beforeEntry.offset) < 1, JSON.stringify({scenario,beforeEntry,afterEntry}));
 			await page.touchscreen.tap(360, 300);
 			await page.waitForTimeout(200);
 			const beforeExit = await scrollPosition();
@@ -179,8 +206,8 @@ async function run() {
 			.locator("#editor-fullscreen-status")
 			.boundingBox();
 		const scrollerRect = await page.locator(".cm-scroller").boundingBox();
-		assert.equal(statusRect.y, 5);
-		assert.equal(statusRect.height, 12);
+		assert.equal(statusRect.y, 0);
+		assert.equal(statusRect.height, 23);
 		assert.equal(scrollerRect.y - (statusRect.y + statusRect.height), 30);
 		assert.equal(scrollerRect.y + scrollerRect.height, 732);
 		await page.waitForTimeout(4000);

@@ -55,6 +55,9 @@ export default function editorReadingControls({
 		status.style.color = getComputedStyle(
 			pane.editor?.contentDOM || pane.element,
 		).color;
+		status.style.backgroundColor = getComputedStyle(
+			pane.editor?.dom || pane.element,
+		).backgroundColor;
 		native("editor-status", [], (data) => {
 			if (fullscreenPane !== pane) return;
 			if (Number.isFinite(data.battery)) {
@@ -68,11 +71,16 @@ export default function editorReadingControls({
 	let placeholder = null;
 	let fullscreenFile = null;
 
+	let scrollTransition = 0;
 	function captureScroll(pane) {
+		const transition = ++scrollTransition;
 		const view = pane.editor;
 		if (!view?.scrollDOM) return () => {};
 		const { scrollTop, scrollLeft } = view.scrollDOM;
 		const snapshot = view.scrollSnapshot();
+		const top = view.scrollDOM.getBoundingClientRect().top;
+		const anchor = view.lineBlockAtHeight(top - view.documentTop);
+		const offset = anchor.top + view.documentTop - top;
 		return () => {
 			// Reparenting disconnects the scroller and resets browser scroll offsets.
 			// Restore offsets immediately and let CodeMirror retain the text anchor
@@ -80,6 +88,19 @@ export default function editorReadingControls({
 			view.scrollDOM.scrollTop = scrollTop;
 			view.scrollDOM.scrollLeft = scrollLeft;
 			view.dispatch({ effects: snapshot });
+			requestAnimationFrame(() => {
+				if (transition !== scrollTransition || !view.dom.isConnected) return;
+				view.requestMeasure({
+					read: () =>
+						view.lineBlockAt(anchor.from).top +
+						view.documentTop -
+						view.scrollDOM.getBoundingClientRect().top,
+					write: (current) => {
+						if (transition === scrollTransition)
+							view.scrollDOM.scrollTop += current - offset;
+					},
+				});
+			});
 		};
 	}
 

@@ -29,12 +29,26 @@ beforeEach(() => {
 describe("editor appearance settings", () => {
 	it("exposes color pickers, spacing inputs, and line heights greater than two", () => {
 		const page = editorSettings();
-		for (const key of ["editorBackgroundColor", "editorForegroundColor"]) expect(page.items.find(item => item.key === key).color).toBe(true);
+		for (const key of ["editorBackgroundColor", "editorForegroundColor", "editorSelectionColor", "editorCursorColor"]) expect(page.items.find(item => item.key === key).color).toBe(true);
 		expect(page.items.find(item => item.key === "lineHeight").promptOptions.test("3.5")).toBe(true);
 		page.callback("editorPaddingLeft", "12.5");
 		expect(mocks.update).toHaveBeenCalledWith({ editorPaddingLeft: 12.5 });
 		page.callback("editorParagraphSpacing", -1);
 		expect(mocks.update).toHaveBeenCalledTimes(1);
+	});
+	it("groups page controls above scroll settings and validates cursor width", () => {
+		const page = editorSettings();
+		const index = page.items.findIndex(item => item.key === "scroll-settings");
+		expect(page.items.slice(index - 2, index).map(item => item.key)).toEqual(["editorPageTurning", "editorPageSwipeDistance"]);
+		expect(page.items[index - 2].category).toBe(page.items[index].category);
+		page.callback("cursorWidth", "3.5");
+		expect(mocks.value.cursorWidth).toBe(3.5);
+		for (const invalid of ["", 0, -1, 11, Infinity]) page.callback("cursorWidth", invalid);
+		expect(mocks.update).toHaveBeenCalledTimes(1);
+		page.callback("editorPaddingTop", "22");
+		page.callback("editorPaddingBottom", "18");
+		expect(mocks.value.editorPaddingTop).toBe(22);
+		expect(mocks.value.editorPaddingBottom).toBe(18);
 	});
 	it("restores theme defaults and rebuilds the settings page without changing fonts", () => {
 		mocks.value.fontSize = "18px";

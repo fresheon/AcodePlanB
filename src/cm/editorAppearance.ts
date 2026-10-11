@@ -10,6 +10,10 @@ import {
 export const editorAppearanceKeys = [
   "editorBackgroundColor",
   "editorForegroundColor",
+  "editorSelectionColor",
+  "editorCursorColor",
+  "editorPaddingTop",
+  "editorPaddingBottom",
   "editorParagraphSpacing",
   "editorPaddingLeft",
   "editorPaddingRight",
@@ -86,25 +90,51 @@ function paragraphSpacing(value: unknown) {
 export function editorAppearance(values: AppearanceSettings) {
   const background = color(values.editorBackgroundColor);
   const foreground = color(values.editorForegroundColor);
-  const root: Record<string, string> = {};
+  const root: Record<string, string> = {
+    "--editor-padding-top": `${isValidEditorSpacing(values.editorPaddingTop) ? Number(values.editorPaddingTop) : 30}px`,
+    "--editor-padding-bottom": `${isValidEditorSpacing(values.editorPaddingBottom) ? Number(values.editorPaddingBottom) : 0}px`,
+    "--editor-content-bottom": `${isValidEditorSpacing(values.editorPaddingBottom) ? Number(values.editorPaddingBottom) : 0}px`,
+  };
   // CodeMirror content has zero horizontal padding by default. Set it
   // explicitly so resetting also removes a previous user override.
   const content: Record<string, string> = {
     paddingLeft: "0px",
     paddingRight: "0px",
+    paddingBottom:
+      "calc(var(--editor-content-bottom) + var(--cm-page-tail, 0px))",
   };
   if (background) root.backgroundColor = background;
   if (foreground) root.color = content.color = foreground;
   for (const [key, property] of [
     ["editorPaddingLeft", "paddingLeft"],
     ["editorPaddingRight", "paddingRight"],
+    ["editorPaddingTop", "paddingTop"],
   ] as const) {
     if (values[key] != null && isValidEditorSpacing(values[key])) {
       content[property] = `${Number(values[key])}px`;
     }
   }
+  const theme: Record<string, Record<string, string>> = {
+    "&": root,
+    ".cm-content": content,
+    ".editor-content-fullscreen &": { "--editor-content-bottom": "0px" },
+    ".editor-content-fullscreen & .cm-content": { paddingTop: "0px" },
+  };
+  const selection = color(values.editorSelectionColor);
+  const cursor = color(values.editorCursorColor);
+  if (selection) {
+    theme[
+      "&:not(.cm-read-only).cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, &:not(.cm-read-only) .cm-selectionBackground, &:not(.cm-read-only) .cm-content::selection, &:not(.cm-read-only) .cm-content ::selection"
+    ] = { backgroundColor: selection };
+  }
+  if (cursor) {
+    theme["&:not(.cm-read-only) .cm-content"] = { caretColor: cursor };
+    theme[
+      "&:not(.cm-read-only) .cm-cursor, &:not(.cm-read-only) .cm-dropCursor"
+    ] = { borderLeftColor: cursor };
+  }
   return [
-    Prec.high(EditorView.theme({ "&": root, ".cm-content": content })),
+    Prec.high(EditorView.theme(theme)),
     paragraphSpacing(values.editorParagraphSpacing),
   ];
 }

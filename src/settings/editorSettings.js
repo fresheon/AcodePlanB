@@ -46,33 +46,6 @@ export default function editorSettings() {
 	});
 	const items = [
 		{
-			key: "editorPageTurning",
-			text: appearanceLabel("editor-page-turning", "Page turning"),
-			checkbox: values.editorPageTurning,
-			info: appearanceLabel(
-				"editor-page-turning-info",
-				"Only active in read-only mode. Swipe right on the left half for the previous page; swipe left on the right half for the next page. Editing keeps normal taps and vertical scrolling.",
-			),
-			category: categories.scrolling,
-		},
-		{
-			key: "editorPageSwipeDistance",
-			text: appearanceLabel(
-				"editor-page-swipe-distance",
-				"Page swipe distance",
-			),
-			value: values.editorPageSwipeDistance ?? 60,
-			valueText: (value) => `${value}px`,
-			prompt: `${appearanceLabel("editor-page-swipe-distance", "Page swipe distance")} (px ≥ 0)`,
-			promptType: "number",
-			promptOptions: { test: isValidPageSwipeDistance },
-			info: appearanceLabel(
-				"editor-page-swipe-distance-info",
-				"Minimum horizontal swipe distance in px. Set 0 to tap the left/right half for previous/next page.",
-			),
-			category: categories.scrolling,
-		},
-		{
 			key: "editorBackgroundColor",
 			text: appearanceLabel(
 				"editor-appearance-background",
@@ -112,6 +85,15 @@ export default function editorSettings() {
 			"editorPaddingRight",
 			appearanceLabel("editor-appearance-right", "Right text padding"),
 		),
+		spacingItem(
+			"editorPaddingTop",
+			appearanceLabel("editor-appearance-top", "Top text padding"),
+		),
+		spacingItem(
+			"editorPaddingBottom",
+			appearanceLabel("editor-appearance-bottom", "Bottom text padding"),
+		),
+
 		{
 			key: "resetEditorAppearance",
 			text: appearanceLabel(
@@ -123,6 +105,33 @@ export default function editorSettings() {
 				"Follow theme colors and restore paragraph spacing and text padding. Font size and line height are preserved.",
 			),
 			category: categories.textLayout,
+		},
+		{
+			key: "editorPageTurning",
+			text: appearanceLabel("editor-page-turning", "Page turning"),
+			checkbox: values.editorPageTurning,
+			info: appearanceLabel(
+				"editor-page-turning-info",
+				"Only active in read-only mode. Swipe right on the left half for the previous page; swipe left on the right half for the next page. Editing keeps normal taps and vertical scrolling.",
+			),
+			category: categories.scrolling,
+		},
+		{
+			key: "editorPageSwipeDistance",
+			text: appearanceLabel(
+				"editor-page-swipe-distance",
+				"Page swipe distance",
+			),
+			value: values.editorPageSwipeDistance ?? 60,
+			valueText: (value) => `${value}px`,
+			prompt: `${appearanceLabel("editor-page-swipe-distance", "Page swipe distance")} (px ≥ 0)`,
+			promptType: "number",
+			promptOptions: { test: isValidPageSwipeDistance },
+			info: appearanceLabel(
+				"editor-page-swipe-distance-info",
+				"Minimum horizontal swipe distance in px. Set 0 to tap the left/right half for previous/next page.",
+			),
+			category: categories.scrolling,
 		},
 		{
 			key: "scroll-settings",
@@ -333,6 +342,40 @@ export default function editorSettings() {
 			category: categories.guidesIndicators,
 		},
 		{
+			key: "editorSelectionColor",
+			text: appearanceLabel(
+				"editor-selection-color",
+				"Selected text highlight color",
+			),
+			value: values.editorSelectionColor || theme.selection || "#264f78",
+			color: true,
+			category: categories.cursorSelection,
+		},
+		{
+			key: "editorCursorColor",
+			text: appearanceLabel("editor-cursor-color", "Cursor settings"),
+			value: values.editorCursorColor || theme.cursor || theme.foreground,
+			color: true,
+			category: categories.cursorSelection,
+		},
+		{
+			key: "cursorWidth",
+			text: appearanceLabel("editor-cursor-width", "Cursor width"),
+			value: values.cursorWidth,
+			valueText: (value) => `${value}px`,
+			prompt: `${appearanceLabel("editor-cursor-width", "Cursor width")} (0 < px ≤ 10)`,
+			promptType: "number",
+			promptOptions: {
+				test: (value) =>
+					String(value).trim() !== "" &&
+					Number.isFinite(Number(value)) &&
+					Number(value) > 0 &&
+					Number(value) <= 10,
+			},
+			category: categories.cursorSelection,
+		},
+
+		{
 			key: "showShareButton",
 			text: strings["show share button"],
 			checkbox: values.showShareButton ?? true,
@@ -369,6 +412,16 @@ export default function editorSettings() {
 	 * @param {string} value
 	 */
 	function callback(key, value) {
+		if (key === "cursorWidth") {
+			if (
+				String(value).trim() !== "" &&
+				Number.isFinite(Number(value)) &&
+				Number(value) > 0 &&
+				Number(value) <= 10
+			)
+				appSettings.update({ cursorWidth: Number(value) });
+			return;
+		}
 		if (key === "editorPageSwipeDistance") {
 			if (isValidPageSwipeDistance(value))
 				appSettings.update({ [key]: Number(value) });
@@ -378,6 +431,11 @@ export default function editorSettings() {
 			appSettings.update({
 				editorBackgroundColor: null,
 				editorForegroundColor: null,
+				editorSelectionColor: null,
+				editorCursorColor: null,
+				cursorWidth: 2,
+				editorPaddingTop: 30,
+				editorPaddingBottom: 0,
 				editorParagraphSpacing: 0,
 				editorPaddingLeft: null,
 				editorPaddingRight: null,

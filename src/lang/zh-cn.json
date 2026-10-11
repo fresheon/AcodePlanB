@@ -887,5 +887,15 @@
 	"settings-info-editor-wrapping-indent": "选择折行后的文本是从行首靠左对齐、保持原行的缩进，还是进一步向内缩进。每增加一级缩进将遵循您设定的制表符宽度。",
 	"icon pack": "图标包",
 	"settings-info-icon-pack": "选择资源管理器及整个应用文件列表中文件和文件夹所使用的图标。",
-	"unavailable": "不可用"
+	"unavailable": "不可用",
+	"editor-appearance-default": "默认",
+	"editor-appearance-background": "编辑器背景颜色",
+	"editor-appearance-foreground": "正文默认颜色",
+	"editor-appearance-foreground-info": "调整普通文字颜色，保留代码语法高亮。",
+	"editor-appearance-paragraph": "段间距",
+	"editor-appearance-paragraph-info": "在空行分隔的文本段之间增加显示间距，不修改文件内容。",
+	"editor-appearance-left": "左侧留白",
+	"editor-appearance-right": "右侧留白",
+	"editor-appearance-reset": "恢复默认外观",
+	"editor-appearance-reset-info": "颜色跟随主题，恢复段间距和左右留白。字号和行高保持不变。"
 }

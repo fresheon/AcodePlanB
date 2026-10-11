@@ -38,6 +38,8 @@ import {
 	registerExternalCommand,
 	removeExternalCommand,
 } from "cm/commandRegistry";
+import { editorAppearance, editorAppearanceKeys } from "cm/editorAppearance";
+import { editorFontTheme } from "cm/editorFontTheme";
 import {
 	blurEditorIfReadOnly,
 	createEditorReadOnlyExtension,
@@ -928,6 +930,7 @@ async function EditorManager($header, $body) {
 	const indentUnitCompartment = new Compartment();
 	const tabSizeCompartment = new Compartment();
 	const fontStyleCompartment = new Compartment();
+	const appearanceCompartment = new Compartment();
 	// Compartment for line wrapping
 	const wrapCompartment = new Compartment();
 	// Compartment for line numbers
@@ -1010,14 +1013,9 @@ async function EditorManager($header, $body) {
 
 	function makeFontTheme() {
 		const fontSize = appSettings?.value?.fontSize || "12px";
-		const lineHeight = appSettings?.value?.lineHeight || 1.6;
+		const lineHeight = appSettings?.value?.lineHeight;
 		const fontFamily = getEditorFontFamily();
-		return EditorView.theme({
-			"&": { fontSize, lineHeight: String(lineHeight) },
-			".cm-content": { fontFamily },
-			".cm-gutter": { fontFamily },
-			".cm-tooltip, .cm-tooltip *": { fontFamily },
-		});
+		return editorFontTheme(fontSize, fontFamily, lineHeight);
 	}
 
 	function makeCursorTheme() {
@@ -1157,6 +1155,13 @@ async function EditorManager($header, $body) {
 	// Centralised CodeMirror options registry for organized configuration
 	// Each spec declares related settings keys, its compartment(s), and a builder returning extension(s)
 	const cmOptionSpecs = [
+		{
+			keys: editorAppearanceKeys,
+			compartments: [appearanceCompartment],
+			build() {
+				return editorAppearance(appSettings.value);
+			},
+		},
 		{
 			keys: ["linenumbers", "relativeLineNumbers"],
 			compartments: [lineNumberCompartment],
@@ -3586,6 +3591,12 @@ async function EditorManager($header, $body) {
 		updateMargin(true);
 		updateEditorLineNumbersFromSettings();
 	});
+
+	for (const key of editorAppearanceKeys) {
+		appSettings.on(`update:${key}`, function () {
+			applyOptions(editorAppearanceKeys);
+		});
+	}
 
 	// Line height update for CodeMirror
 	appSettings.on("update:lineHeight", function () {

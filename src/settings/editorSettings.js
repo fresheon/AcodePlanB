@@ -1,3 +1,9 @@
+import {
+	editorAppearanceKeys,
+	isValidEditorSpacing,
+} from "cm/editorAppearance";
+import { isValidEditorLineHeight } from "cm/editorFontTheme";
+import { getThemeConfig } from "cm/themes";
 import settingsPage from "components/settingsPage";
 import config from "lib/config";
 import fonts from "lib/fonts";
@@ -21,7 +27,75 @@ export default function editorSettings() {
 		guidesIndicators: strings["settings-category-guides-indicators"],
 		cursorSelection: strings["settings-category-cursor-selection"],
 	};
+	const theme = getThemeConfig(values.editorTheme);
+	const appearanceLabel = (key, fallback) => strings[key] || fallback;
+	const spacingItem = (key, label, description) => ({
+		key,
+		text: label,
+		value: values[key],
+		valueText: (value) =>
+			value == null
+				? appearanceLabel("editor-appearance-default", "Default")
+				: `${value}px`,
+		prompt: `${label} (0–80px)`,
+		promptType: "number",
+		promptOptions: { test: isValidEditorSpacing },
+		info: description,
+		category: categories.textLayout,
+	});
 	const items = [
+		{
+			key: "editorBackgroundColor",
+			text: appearanceLabel(
+				"editor-appearance-background",
+				"Editor background color",
+			),
+			value: values.editorBackgroundColor || theme.background,
+			color: true,
+			category: categories.textLayout,
+		},
+		{
+			key: "editorForegroundColor",
+			text: appearanceLabel(
+				"editor-appearance-foreground",
+				"Default text color",
+			),
+			value: values.editorForegroundColor || theme.foreground,
+			color: true,
+			info: appearanceLabel(
+				"editor-appearance-foreground-info",
+				"Changes plain text; preserves syntax highlighting.",
+			),
+			category: categories.textLayout,
+		},
+		spacingItem(
+			"editorParagraphSpacing",
+			appearanceLabel("editor-appearance-paragraph", "Paragraph spacing"),
+			appearanceLabel(
+				"editor-appearance-paragraph-info",
+				"Adds visual spacing between paragraphs separated by blank lines; does not change file contents.",
+			),
+		),
+		spacingItem(
+			"editorPaddingLeft",
+			appearanceLabel("editor-appearance-left", "Left text padding"),
+		),
+		spacingItem(
+			"editorPaddingRight",
+			appearanceLabel("editor-appearance-right", "Right text padding"),
+		),
+		{
+			key: "resetEditorAppearance",
+			text: appearanceLabel(
+				"editor-appearance-reset",
+				"Restore default appearance",
+			),
+			info: appearanceLabel(
+				"editor-appearance-reset-info",
+				"Follow theme colors and restore paragraph spacing and text padding. Font size and line height are preserved.",
+			),
+			category: categories.textLayout,
+		},
 		{
 			key: "scroll-settings",
 			text: strings["scroll settings"],
@@ -55,13 +129,10 @@ export default function editorSettings() {
 			key: "lineHeight",
 			text: strings["line height"],
 			value: values.lineHeight,
-			prompt: strings["line height"],
+			prompt: `${strings["line height"]} (1–4)`,
 			promptType: "number",
 			promptOptions: {
-				test(value) {
-					value = Number.parseFloat(value);
-					return value >= 1 && value <= 2;
-				},
+				test: isValidEditorLineHeight,
 			},
 			info: strings["settings-info-editor-line-height"],
 			category: categories.textLayout,
@@ -270,6 +341,32 @@ export default function editorSettings() {
 	 * @param {string} value
 	 */
 	function callback(key, value) {
+		if (key === "resetEditorAppearance") {
+			appSettings.update({
+				editorBackgroundColor: null,
+				editorForegroundColor: null,
+				editorParagraphSpacing: 0,
+				editorPaddingLeft: null,
+				editorPaddingRight: null,
+			});
+			// Refresh displayed values after resetting, too.
+			const page = appSettings.uiSettings["editor-settings"];
+			if (page) page.hide();
+			const nextPage = editorSettings();
+			appSettings.uiSettings["editor-settings"] = nextPage;
+			nextPage.show();
+			return;
+		}
+		if (editorAppearanceKeys.includes(key) && !key.endsWith("Color")) {
+			if (isValidEditorSpacing(value))
+				appSettings.update({ [key]: Number(value) });
+			return;
+		}
+		if (key === "lineHeight") {
+			if (!isValidEditorLineHeight(value)) return;
+			appSettings.update({ lineHeight: Number(value) });
+			return;
+		}
 		switch (key) {
 			case "scroll-settings":
 				appSettings.uiSettings[key].show();

@@ -891,6 +891,16 @@ declare type LangStrings = {
   "plugin-review:error-downvote-comment": string;
   "plugin-review:error-empty": string;
   "plugin-review:unrated": string;
+  "editor-appearance-default": string;
+  "editor-appearance-background": string;
+  "editor-appearance-foreground": string;
+  "editor-appearance-foreground-info": string;
+  "editor-appearance-paragraph": string;
+  "editor-appearance-paragraph-info": string;
+  "editor-appearance-left": string;
+  "editor-appearance-right": string;
+  "editor-appearance-reset": string;
+  "editor-appearance-reset-info": string;
 };
 
 declare var strings: LangStrings;

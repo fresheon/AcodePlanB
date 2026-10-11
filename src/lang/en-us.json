@@ -887,5 +887,15 @@
 	"plugin-review:error-max-length": "Review must be {max} characters or less.",
 	"plugin-review:error-downvote-comment": "Tell the developer what could be improved.",
 	"plugin-review:error-empty": "Add a comment or choose thumbs up.",
-	"plugin-review:unrated": "Unrated"
+	"plugin-review:unrated": "Unrated",
+	"editor-appearance-default": "Default",
+	"editor-appearance-background": "Editor background color",
+	"editor-appearance-foreground": "Default text color",
+	"editor-appearance-foreground-info": "Changes plain text; preserves syntax highlighting.",
+	"editor-appearance-paragraph": "Paragraph spacing",
+	"editor-appearance-paragraph-info": "Adds visual spacing between paragraphs separated by blank lines; does not change file contents.",
+	"editor-appearance-left": "Left text padding",
+	"editor-appearance-right": "Right text padding",
+	"editor-appearance-reset": "Restore default appearance",
+	"editor-appearance-reset-info": "Follow theme colors and restore paragraph spacing and text padding. Font size and line height are preserved."
 }

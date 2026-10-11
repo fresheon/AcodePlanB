@@ -101,7 +101,7 @@ export default function editorSettings() {
 			appearanceLabel("editor-appearance-paragraph", "Paragraph spacing"),
 			appearanceLabel(
 				"editor-appearance-paragraph-info",
-				"Adds visual spacing between paragraphs separated by blank lines; does not change file contents.",
+				"Adds spacing between paragraphs separated by manual line breaks. Soft-wrapped rows are unaffected; file contents are unchanged.",
 			),
 		),
 		spacingItem(

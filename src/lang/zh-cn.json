@@ -893,7 +893,7 @@
 	"editor-appearance-foreground": "正文默认颜色",
 	"editor-appearance-foreground-info": "调整普通文字颜色，保留代码语法高亮。",
 	"editor-appearance-paragraph": "段间距",
-	"editor-appearance-paragraph-info": "在空行分隔的文本段之间增加显示间距，不修改文件内容。",
+	"editor-appearance-paragraph-info": "在文本段之间增加显示间距。每次手动换行视为新段；自动换行不增加间距，不修改文件内容。",
 	"editor-appearance-left": "左侧留白",
 	"editor-appearance-right": "右侧留白",
 	"editor-appearance-reset": "恢复默认外观",

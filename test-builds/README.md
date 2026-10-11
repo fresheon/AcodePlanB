@@ -15,7 +15,7 @@ Under Settings → Editor settings, test:
 
 - Editor background color and default text color; syntax highlighting retains its theme colors.
 - Line height 1, 2, 2.5 and 4 (unitless font-size multipliers).
-- Paragraph spacing 0–80px, which adds visual spacing before a nonempty paragraph after blank lines without changing the file. The paragraph-start line number stays aligned.
+- Paragraph spacing 0–80px, which adds visual spacing between nonempty paragraphs separated by manual line breaks. Soft-wrapped rows receive no extra spacing; existing blank lines and file contents stay unchanged. The paragraph-start line number stays aligned.
 - Left and right text padding 0–80px, including wrapped lines and split panes.
 - Restore default appearance, which returns colors to the selected theme and resets spacing/padding while retaining font and line-height settings.
 - Reopen the app to check persistence. Switch themes to check that custom colors persist; restore defaults to follow theme colors again.
@@ -87,3 +87,9 @@ The four appearance override fields have `null` defaults, but saved colors are s
 Regression tests instantiate the actual settings singleton repeatedly using the saved JSON, checking save/relaunch, a theme or unrelated preference change followed by another launch, explicit 0px/80px padding, default reset, and missing/invalid fields. Cordova file I/O is simulated in these tests; physical-device restart validation remains pending.
 
 Validation: 745 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Android APK build and signature verification passed. If an older build already overwrote appearance values with defaults, enter the desired values again after installing this build.
+
+## Paragraph spacing for manual line breaks
+
+Paragraph spacing previously recognized only paragraphs separated by blank lines, so changing the setting had no effect on text with one manual line break between paragraphs. Each nonempty document line after the first now receives the configured extra spacing. Automatic wrapping remains governed by line height; existing blank lines are preserved, and 0px restores the original spacing.
+
+Validation: 746 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Android debug APK build and signature verification passed. Chromium verified 0px, 18px and 40px spacing and resetting to 0px with and without blank separators, with wrapping enabled and disabled, plus the existing editing, fullscreen and complete-row paging checks. Settings save/relaunch tests verify 0px, 18px, 40px and 80px persistence. Physical tablet validation remains pending.

@@ -68,6 +68,15 @@ describe("editor appearance persistence", () => {
 		await second.update({ editorTheme: "light", editorPageTurning: true });
 		expect((await disk.launch()).value).toMatchObject(overrides);
 	});
+	it("preserves numeric paragraph spacing across launches and permits disabling it", async () => {
+		const disk = storage();
+		let settings = await disk.launch();
+		for (const spacing of [18, 40, 80, 0]) {
+			await settings.update({ editorParagraphSpacing: spacing });
+			settings = await disk.launch();
+			expect(settings.value.editorParagraphSpacing).toBe(spacing);
+		}
+	});
 	it("retains explicit zero padding and permits restoring theme/default values", async () => {
 		const disk = storage(overrides);
 		const settings = await disk.launch();

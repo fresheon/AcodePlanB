@@ -47,7 +47,7 @@ describe("editor appearance", () => {
     expect(getComputedStyle(view.contentDOM).paddingRight).toBe("0px");
     expect(view.state.doc.toString()).toBe("alpha\nbeta");
   });
-  it("adds spacing only at a paragraph boundary and updates when blank lines change", () => {
+  it("adds spacing after hard line breaks with or without blank separators", () => {
     const { view, compartment } = create("\nfirst\nline\n\n\nsecond\nlast", {
       editorParagraphSpacing: 18,
     });
@@ -55,15 +55,25 @@ describe("editor appearance", () => {
       [...view.contentDOM.querySelectorAll<HTMLElement>(".cm-line")]
         .filter((line) => line.style.paddingTop === "18px")
         .map((line) => line.textContent);
-    expect(paddedLines()).toEqual(["second"]);
+    expect(paddedLines()).toEqual(["line", "second", "last"]);
     const doc = view.state.doc.toString();
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: "first\nsecond" },
     });
-    expect(paddedLines()).toEqual([]);
+    expect(paddedLines()).toEqual(["second"]);
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: doc },
     });
+    view.dispatch({
+      effects: compartment.reconfigure(
+        editorAppearance({ editorParagraphSpacing: 40 }),
+      ),
+    });
+    expect(
+      [...view.contentDOM.querySelectorAll<HTMLElement>(".cm-line")]
+        .filter((line) => line.style.paddingTop === "40px")
+        .map((line) => line.textContent),
+    ).toEqual(["line", "second", "last"]);
     view.dispatch({
       effects: compartment.reconfigure(
         editorAppearance({ editorParagraphSpacing: 0 }),

@@ -301,6 +301,57 @@ async function run() {
 		await page.waitForTimeout(150);
 		assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > 0);
 
+		// Verify visible spacing changes on ordinary Enter-separated paragraphs.
+		for (const wrap of [false, true]) {
+			for (const blank of [false, true]) {
+				const heights = [];
+				for (const spacing of [0, 18, 40, 0]) {
+					await page.evaluate(
+						({ wrap, blank, spacing }) => {
+							const first = wrap
+								? "wrapped paragraph words ".repeat(12)
+								: "first paragraph";
+							reading.setLayout(
+								first + (blank ? "\n\n" : "\n") + "second paragraph",
+								wrap,
+								1.73,
+								spacing,
+							);
+							reading.view.scrollDOM.scrollTop = 0;
+						},
+						{ wrap, blank, spacing },
+					);
+					await page.waitForTimeout(150);
+					const geometry = await page.evaluate(() => {
+						const lines = [
+							...reading.view.contentDOM.querySelectorAll(".cm-line"),
+						].filter((line) => line.textContent.trim());
+						const range = document.createRange();
+						range.selectNodeContents(lines[0]);
+						const first = [...range.getClientRects()].filter(
+							(rect) => rect.width > 0,
+						);
+						range.selectNodeContents(lines[1]);
+						const second = [...range.getClientRects()].find(
+							(rect) => rect.width > 0,
+						);
+						return {
+							gap: second.top - first[first.length - 1].top,
+							wrapStep: first.length > 1 ? first[1].top - first[0].top : null,
+						};
+					});
+					heights.push(geometry);
+				}
+				assert(Math.abs(heights[1].gap - heights[0].gap - 18) < 0.5);
+				assert(Math.abs(heights[2].gap - heights[0].gap - 40) < 0.5);
+				assert(Math.abs(heights[3].gap - heights[0].gap) < 0.5);
+				if (wrap)
+					assert(
+						Math.abs(heights[2].wrapStep - heights[0].wrapStep) < 0.5,
+						"Paragraph spacing must not increase soft-wrapped row spacing",
+					);
+			}
+		}
 		// Fractional row heights, wrapping and paragraph gaps must never split text.
 		await page.locator("#editor-content-fullscreen-toggle").tap();
 		for (const wrap of [false, true]) {

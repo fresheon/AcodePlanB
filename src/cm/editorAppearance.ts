@@ -41,16 +41,14 @@ function paragraphSpacing(value: unknown) {
   function build(doc: import("@codemirror/state").Text): DecorationSet {
     const ranges = [];
     let previousParagraph = false;
-    let blank = false;
     for (let n = 1; n <= doc.lines; n++) {
       const line = doc.line(n);
-      if (!line.text.trim()) {
-        blank = true;
-        continue;
-      }
-      if (previousParagraph && blank) ranges.push(mark.range(line.from));
+      // Hard line breaks separate paragraphs. Soft-wrapped rows belong to the
+      // same document line, so they receive no additional paragraph spacing.
+      // Preserve blank lines and apply the extra gap once to each next paragraph.
+      if (!line.text.trim()) continue;
+      if (previousParagraph) ranges.push(mark.range(line.from));
       previousParagraph = true;
-      blank = false;
     }
     return Decoration.set(ranges);
   }

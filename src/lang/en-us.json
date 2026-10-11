@@ -893,7 +893,7 @@
 	"editor-appearance-foreground": "Default text color",
 	"editor-appearance-foreground-info": "Changes plain text; preserves syntax highlighting.",
 	"editor-appearance-paragraph": "Paragraph spacing",
-	"editor-appearance-paragraph-info": "Adds visual spacing between paragraphs separated by blank lines; does not change file contents.",
+	"editor-appearance-paragraph-info": "Adds spacing between paragraphs separated by manual line breaks. Soft-wrapped rows are unaffected; file contents are unchanged.",
 	"editor-appearance-left": "Left text padding",
 	"editor-appearance-right": "Right text padding",
 	"editor-appearance-reset": "Restore default appearance",

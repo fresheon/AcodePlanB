@@ -360,3 +360,42 @@ header.tile > .editor-reading-button:not(:disabled) {
   opacity: 0.65;
   border-radius: 0 0 0 12px;
 }
+
+#editor-content-fullscreen-exit.hint-hidden {
+  opacity: 0;
+  // Keep the invisible corner button clickable after the hint disappears.
+  pointer-events: auto;
+}
+
+#editor-fullscreen-status {
+  position: fixed;
+  top: 0;
+  left: 8px;
+  z-index: 10001;
+  height: var(--status-height, 24px);
+  font-size: var(--status-icon-size, 16px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  line-height: 1;
+  .editor-fullscreen-battery {
+    position: relative;
+    width: 1.4em;
+    height: 1em;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    padding: 2px;
+    box-sizing: border-box;
+    &::after {
+      content: "";
+      position: absolute;
+      right: -3px;
+      top: 25%;
+      width: 2px;
+      height: 50%;
+      background: currentColor;
+    }
+  }
+  .editor-fullscreen-battery-level { display: block; height: 100%; background: currentColor; }
+}

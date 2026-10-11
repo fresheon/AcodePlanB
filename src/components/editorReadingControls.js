@@ -5,6 +5,9 @@ export default function editorReadingControls({
 	pencil,
 	exec,
 	labels,
+	native = (action, args, success) => {
+		window.cordova?.exec(success, console.error, "System", action, args);
+	},
 }) {
 	function button(id, icon, label) {
 		const element = document.createElement("button");
@@ -30,6 +33,42 @@ export default function editorReadingControls({
 		"fullscreen_exit",
 		labels.exit,
 	);
+	const status = document.createElement("div");
+	status.id = "editor-fullscreen-status";
+	const clock = document.createElement("time");
+	const battery = document.createElement("span");
+	battery.className = "editor-fullscreen-battery";
+	const level = document.createElement("span");
+	level.className = "editor-fullscreen-battery-level";
+	battery.append(level);
+	const percentage = document.createElement("span");
+	status.append(clock, battery, percentage);
+	let hintTimer;
+	let statusTimer;
+	function refreshStatus() {
+		clock.textContent = new Date().toLocaleTimeString([], {
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+		const pane = fullscreenPane;
+		if (!pane) return;
+		status.style.color = getComputedStyle(
+			pane.editor?.contentDOM || pane.element,
+		).color;
+		native("editor-status", [], (data) => {
+			if (fullscreenPane !== pane) return;
+			status.style.setProperty("--status-height", `${data.height || 24}px`);
+			status.style.setProperty(
+				"--status-icon-size",
+				`${data.iconSize || 16}px`,
+			);
+			if (Number.isFinite(data.battery)) {
+				level.style.width = `${data.battery}%`;
+				percentage.textContent = `${data.charging ? "ϟ " : ""}${data.battery}%`;
+				battery.setAttribute("aria-label", percentage.textContent);
+			}
+		});
+	}
 	let fullscreenPane = null;
 	let placeholder = null;
 	let fullscreenFile = null;
@@ -40,6 +79,10 @@ export default function editorReadingControls({
 		if (placeholder?.parentNode) placeholder.replaceWith(pane.element);
 		pane.element.classList.remove("editor-content-fullscreen");
 		document.body.classList.remove("editor-content-fullscreen-mode");
+		clearTimeout(hintTimer);
+		clearInterval(statusTimer);
+		status.remove();
+		native("editor-immersive", [false], () => pane.editor?.requestMeasure());
 		exitButton.remove();
 		fullscreenPane = placeholder = fullscreenFile = null;
 		fullscreenButton.setAttribute("aria-pressed", "false");
@@ -53,6 +96,7 @@ export default function editorReadingControls({
 		exit();
 	}
 	function enter() {
+		if (fullscreenPane) return;
 		const file = manager.activeFile;
 		if (file?.type !== "editor" || file.loading) return;
 		const pane = manager.getFilePane(file);
@@ -64,7 +108,12 @@ export default function editorReadingControls({
 		pane.editor?.contentDOM.blur();
 		pane.element.classList.add("editor-content-fullscreen");
 		document.body.classList.add("editor-content-fullscreen-mode");
-		document.body.append(pane.element, exitButton);
+		exitButton.classList.remove("hint-hidden");
+		document.body.append(pane.element, status, exitButton);
+		native("editor-immersive", [true], () => pane.editor?.requestMeasure());
+		refreshStatus();
+		statusTimer = setInterval(refreshStatus, 15000);
+		hintTimer = setTimeout(() => exitButton.classList.add("hint-hidden"), 4000);
 		fullscreenButton.setAttribute("aria-pressed", "true");
 		pane.editor?.requestMeasure();
 		document.addEventListener("keydown", onKeyDown, true);

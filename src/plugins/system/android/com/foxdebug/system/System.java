@@ -18,6 +18,10 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.BatteryManager;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.os.Environment;
 import android.os.PowerManager;
 import android.provider.DocumentsContract;
@@ -76,6 +80,61 @@ public class System extends CordovaPlugin {
 
   private static final String TAG = "SystemPlugin";
 
+  private boolean editorImmersive = false;
+  private int savedEditorSystemUi;
+  private int savedEditorBars;
+  private int savedEditorBehavior;
+
+  private void setEditorImmersive(boolean enabled) {
+    Window window = activity.getWindow();
+    View decor = window.getDecorView();
+    WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, decor);
+    if (enabled && !editorImmersive) {
+      savedEditorSystemUi = decor.getSystemUiVisibility();
+      savedEditorBehavior = controller.getSystemBarsBehavior();
+      WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(decor);
+      savedEditorBars = 0;
+      if (insets == null || insets.isVisible(WindowInsetsCompat.Type.statusBars()))
+        savedEditorBars |= WindowInsetsCompat.Type.statusBars();
+      if (insets == null || insets.isVisible(WindowInsetsCompat.Type.navigationBars()))
+        savedEditorBars |= WindowInsetsCompat.Type.navigationBars();
+    }
+    if (enabled) {
+      controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+      controller.hide(WindowInsetsCompat.Type.systemBars());
+    } else if (editorImmersive) {
+      controller.hide(WindowInsetsCompat.Type.systemBars());
+      controller.show(savedEditorBars);
+      controller.setSystemBarsBehavior(savedEditorBehavior);
+      if (SDK_INT < 30) decor.setSystemUiVisibility(savedEditorSystemUi);
+    }
+    editorImmersive = enabled;
+  }
+
+  @Override
+  public void onResume(boolean multitasking) {
+    super.onResume(multitasking);
+    if (editorImmersive) activity.runOnUiThread(() -> setEditorImmersive(true));
+  }
+
+  private void editorStatus(CallbackContext callback) throws JSONException {
+    JSONObject result = new JSONObject();
+    Intent battery = activity.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+    if (battery != null) {
+      int level = battery.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+      int scale = battery.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+      if (level >= 0 && scale > 0) result.put("battery", Math.round(level * 100f / scale));
+      result.put("charging", battery.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0);
+    }
+    android.content.res.Resources resources = activity.getResources();
+    float density = resources.getDisplayMetrics().density;
+    int heightId = resources.getIdentifier("status_bar_height", "dimen", "android");
+    int iconId = resources.getIdentifier("status_bar_icon_size", "dimen", "android");
+    result.put("height", heightId == 0 ? 24 : resources.getDimensionPixelSize(heightId) / density);
+    result.put("iconSize", iconId == 0 ? 16 : resources.getDimensionPixelSize(iconId) / density);
+    callback.success(result);
+  }
+
   private CallbackContext requestPermissionCallback;
   private static final Map<String, String> APP_ICON_ALIASES;
 
@@ -131,6 +190,7 @@ public class System extends CordovaPlugin {
   public void onReset() {
     super.onReset();
     StreamHttp.cancelAll();
+    activity.runOnUiThread(() -> setEditorImmersive(false));
     intentHandler = null;
   }
 
@@ -178,6 +238,16 @@ public class System extends CordovaPlugin {
       case "extractAsset":
       case "pin-file-shortcut":
         break;
+      case "editor-status":
+        editorStatus(callbackContext);
+        return true;
+      case "editor-immersive":
+        final boolean immersive = args.getBoolean(0);
+        activity.runOnUiThread(() -> {
+          setEditorImmersive(immersive);
+          callbackContext.success();
+        });
+        return true;
       case "get-configuration":
         getConfiguration(callbackContext);
         return true;

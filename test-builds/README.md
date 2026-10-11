@@ -7,7 +7,7 @@ Download `acode-editor-appearance-debug.apk` from this directory using GitHub's 
 The header now has two buttons beside the pencil:
 
 - An eye in read-only mode, or a crossed-out eye in editing mode. Click it to invoke the existing read-only command. The original menu entry remains synchronized.
-- A fullscreen icon that shows only the active editor pane. Click the top-right exit icon once (or press Escape) to restore the original pane layout. Switching to another file or closing the fullscreen file also exits.
+- A fullscreen icon that shows only the active editor pane. Click the top-right corner once (or press Escape) to restore the original pane layout. Switching to another file or closing the fullscreen file also exits.
 
 Read-only text cannot be selected by tap, double click or long press and has no visible cursor or active-line highlight. Scrolling is retained. Switching back to editing restores ordinary selection and input. The fullscreen toggle does not change file editability or the global fullscreen preference.
 
@@ -37,3 +37,13 @@ Toolchain used: Node 24, JDK 21, Android API 36, Build Tools 36.0.0, Gradle 8.14
 The original header uses `header.tile`, whose child elements default to `pointer-events: none`. Reading buttons now explicitly opt into pointer hit testing. This fixes both visible-but-unresponsive toolbar icons.
 
 The updated browser regression uses the actual `header.tile` and compiled `www/build/main.css`, checks `elementFromPoint` hit testing, taps both buttons, exits fullscreen through the top-right corner, verifies read-only scrolling/no cursor and types text after returning to editing. The regression is saved at `tests/browser/editorReadingControls.cjs` (requires Playwright and Chromium; run after the Rspack build). The 16 relevant unit tests and Biome check passed; the rebuilt APK passed signature verification. Android device validation remains pending.
+
+## Android immersive reading update
+
+Entering editor fullscreen now hides Android status and navigation bars using WindowInsetsControllerCompat. Exiting restores their previous visibility and behavior; returning to the app re-applies immersive mode while reading. Android still permits temporary system bars through its system swipe gesture.
+
+A top-left clock and battery indicator use the editor's default foreground color. Battery and clock refresh every 15 seconds. Status row and icon dimensions are read from Android resources; devices that do not expose an icon-size resource use a 16dp fallback (24dp row fallback). Vendor-specific SystemUI dimensions need device verification.
+
+The top-right exit hint becomes transparent after four seconds, while its 48px corner hit area remains active. Entering again resets the hint. Timers are cleared on exit.
+
+Validation for this update: 735 tests passed, 1 skipped; TypeScript, Biome, Rspack, Chromium touch regression (including invisible corner hit testing), Android APK build and signature verification passed. Physical tablet system-bar behavior and visual matching remain to be tested.

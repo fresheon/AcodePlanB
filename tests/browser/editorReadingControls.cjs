@@ -119,6 +119,10 @@ async function run() {
 		const rect = await page.locator(".editor-content-fullscreen").boundingBox();
 		assert.deepEqual(rect, { x: 0, y: 0, width: 412, height: 732 });
 		assert.equal(await page.locator(".editor-pane-tabs").isVisible(), false);
+		assert.equal(await page.locator("#editor-fullscreen-status").count(), 1);
+		await page.waitForTimeout(4000);
+		assert.equal(await page.locator("#editor-content-fullscreen-exit").evaluate(el => getComputedStyle(el).opacity), "0");
+		assert.equal(await page.evaluate(() => document.elementFromPoint(392, 20).id), "editor-content-fullscreen-exit");
 		await page.touchscreen.tap(392, 20);
 		assert.equal(await page.locator(".editor-content-fullscreen").count(), 0);
 		assert.equal(

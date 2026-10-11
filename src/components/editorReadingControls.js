@@ -104,6 +104,47 @@ export default function editorReadingControls({
 		};
 	}
 
+	let tapStart = null;
+	let tapCount = 0;
+	let lastTap = 0;
+	function showExitHint() {
+		clearTimeout(hintTimer);
+		exitButton.classList.remove("hint-hidden");
+		hintTimer = setTimeout(() => exitButton.classList.add("hint-hidden"), 4000);
+	}
+	function onPointerDown(event) {
+		if (!event.isPrimary || event.button !== 0) return;
+		tapStart = {
+			id: event.pointerId,
+			x: event.clientX,
+			y: event.clientY,
+			time: event.timeStamp,
+		};
+	}
+	function onPointerUp(event) {
+		const start = tapStart;
+		tapStart = null;
+		if (
+			!start ||
+			start.id !== event.pointerId ||
+			event.timeStamp - start.time > 500 ||
+			Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12
+		) {
+			tapCount = 0;
+			return;
+		}
+		tapCount = event.timeStamp - lastTap <= 500 ? tapCount + 1 : 1;
+		lastTap = event.timeStamp;
+		if (tapCount === 4) {
+			tapCount = 0;
+			showExitHint();
+		}
+	}
+	function onPointerCancel() {
+		tapStart = null;
+		tapCount = 0;
+	}
+
 	function exit() {
 		if (!fullscreenPane) return;
 		const pane = fullscreenPane;
@@ -113,6 +154,11 @@ export default function editorReadingControls({
 		document.body.classList.remove("editor-content-fullscreen-mode");
 		clearTimeout(hintTimer);
 		clearInterval(statusTimer);
+		document.removeEventListener("pointerdown", onPointerDown, true);
+		document.removeEventListener("pointerup", onPointerUp, true);
+		document.removeEventListener("pointercancel", onPointerCancel, true);
+		onPointerCancel();
+		lastTap = 0;
 		status.remove();
 		native("editor-immersive", [false], () => pane.editor?.requestMeasure());
 		exitButton.remove();
@@ -144,13 +190,15 @@ export default function editorReadingControls({
 		pane.editor?.contentDOM.blur();
 		pane.element.classList.add("editor-content-fullscreen");
 		document.body.classList.add("editor-content-fullscreen-mode");
-		exitButton.classList.remove("hint-hidden");
 		document.body.append(pane.element, status, exitButton);
 		restoreScroll();
 		native("editor-immersive", [true], () => pane.editor?.requestMeasure());
 		refreshStatus();
 		statusTimer = setInterval(refreshStatus, 15000);
-		hintTimer = setTimeout(() => exitButton.classList.add("hint-hidden"), 4000);
+		showExitHint();
+		document.addEventListener("pointerdown", onPointerDown, true);
+		document.addEventListener("pointerup", onPointerUp, true);
+		document.addEventListener("pointercancel", onPointerCancel, true);
 		fullscreenButton.setAttribute("aria-pressed", "true");
 		pane.editor?.requestMeasure();
 		document.addEventListener("keydown", onKeyDown, true);

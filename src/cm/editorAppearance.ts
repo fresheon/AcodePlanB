@@ -125,7 +125,7 @@ export function editorAppearance(values: AppearanceSettings) {
   if (selection) {
     theme[
       "&:not(.cm-read-only).cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, &:not(.cm-read-only) .cm-selectionBackground, &:not(.cm-read-only) .cm-content::selection, &:not(.cm-read-only) .cm-content ::selection"
-    ] = { backgroundColor: selection };
+    ] = { backgroundColor: `${selection} !important` };
   }
   if (cursor) {
     theme["&:not(.cm-read-only) .cm-content"] = { caretColor: cursor };

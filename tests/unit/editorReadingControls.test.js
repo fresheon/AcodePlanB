@@ -98,6 +98,37 @@ describe("editor reading controls", () => {
 		control.enter();
 		expect(control.exitButton.classList.contains("hint-hidden")).toBe(false);
 	});
+	it("reveals the hint for four seconds after four quick taps and ignores slow taps or swipes", () => {
+		vi.useFakeTimers();
+		const { control } = setup();
+		control.enter();
+		vi.advanceTimersByTime(4000);
+		let time = 1000;
+		function tap(gap = 150, movement = 0) {
+			time += gap;
+			for (const [type, stamp, x] of [["pointerdown", time, 100], ["pointerup", time + 20, 100 + movement]]) {
+				const event = new Event(type, { bubbles: true });
+				Object.assign(event, { pointerId: 1, isPrimary: true, button: 0, clientX: x, clientY: 200 });
+				Object.defineProperty(event, "timeStamp", { value: stamp });
+				document.body.dispatchEvent(event);
+			}
+		}
+		for (let i = 0; i < 4; i++) tap(600);
+		expect(control.exitButton.classList.contains("hint-hidden")).toBe(true);
+		tap(150, 50);
+		for (let i = 0; i < 3; i++) tap();
+		expect(control.exitButton.classList.contains("hint-hidden")).toBe(true);
+		tap();
+		expect(control.exitButton.classList.contains("hint-hidden")).toBe(false);
+		vi.advanceTimersByTime(3999);
+		expect(control.exitButton.classList.contains("hint-hidden")).toBe(false);
+		vi.advanceTimersByTime(1);
+		expect(control.exitButton.classList.contains("hint-hidden")).toBe(true);
+		control.exit();
+		for (let i = 0; i < 4; i++) tap();
+		expect(control.exitButton.isConnected).toBe(false);
+		expect(vi.getTimerCount()).toBe(0);
+	});
 	it("places buttons beside the pencil and uses the existing read-only command", () => {
 		const { control, header, pencil, exec, file, handlers } = setup();
 		expect([...header.children]).toEqual([

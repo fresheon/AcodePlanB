@@ -70,6 +70,7 @@ async function run() {
 		});
 		await page.waitForTimeout(150);
 		assert.equal(await page.locator(".cm-selectionBackground").first().evaluate(el => getComputedStyle(el).backgroundColor), "rgb(255, 238, 0)");
+		assert.equal(await page.locator(".cm-line").first().evaluate(el => getComputedStyle(el, "::selection").backgroundColor), "rgb(255, 238, 0)");
 		await page.evaluate(() => reading.view.dispatch({ selection: { anchor: 2 } }));
 		await page.waitForTimeout(150);
 		const cursorStyle = await page.locator(".cm-cursor").first().evaluate(el => ({ color: getComputedStyle(el).borderLeftColor, width: getComputedStyle(el).borderLeftWidth }));
@@ -221,6 +222,10 @@ async function run() {
 			await page.evaluate(() => document.elementFromPoint(392, 20).id),
 			"editor-content-fullscreen-exit",
 		);
+		for (let i = 0; i < 4; i++) await page.touchscreen.tap(200, 200);
+		assert.equal(await page.locator("#editor-content-fullscreen-exit").evaluate(el => getComputedStyle(el).opacity), "0.65");
+		await page.waitForTimeout(4100);
+		assert.equal(await page.locator("#editor-content-fullscreen-exit").evaluate(el => getComputedStyle(el).opacity), "0");
 		await page.touchscreen.tap(392, 20);
 		assert.equal(await page.locator(".editor-content-fullscreen").count(), 0);
 		assert.equal(

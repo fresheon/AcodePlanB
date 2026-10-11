@@ -4,9 +4,9 @@ This branch contains the complete Acode source tree and a debug APK with editor 
 
 Download `acode-editor-appearance-debug.apk` from this directory using GitHub's download button. Verify it against `SHA256SUMS` if desired. The package ID is `com.foxdebug.acode`; the APK uses a development signature. An existing installation with a different signature cannot be updated in place. Back up app data before uninstalling an existing app.
 
-The header now has two buttons beside the pencil:
+The original file-tools icon is now a diagonal hammer. Beside it are two buttons:
 
-- An eye in read-only mode, or a crossed-out eye in editing mode. Click it to invoke the existing read-only command. The original menu entry remains synchronized.
+- An eye in read-only mode, or a pencil with an underline in editing mode. Click it to invoke the existing read-only command. The original menu entry remains synchronized.
 - A fullscreen icon that shows only the active editor pane. Click the top-right corner once (or press Escape) to restore the original pane layout. Switching to another file or closing the fullscreen file also exits.
 
 Read-only text cannot be selected by tap, double click or long press and has no visible cursor or active-line highlight. Scrolling is retained. Switching back to editing restores ordinary selection and input. Entering fullscreen switches the active file to read-only. Exiting keeps it read-only until the eye button is clicked outside fullscreen. The global fullscreen preference is unchanged.
@@ -58,7 +58,7 @@ The browser regression verifies a 12px status row 5px below the screen top, exac
 
 Settings → Editor settings now includes Page turning, immediately followed by Page swipe distance (px). Page turning defaults to off; the distance defaults to 60px and accepts finite nonnegative numbers. Changes persist and immediately reconfigure open editor panes, in ordinary and fullscreen layouts.
 
-With paging enabled and the editor read-only, swipe right from the text viewport's left half for the previous page, or left from its right half for the next page. The horizontal distance must reach the configured threshold and exceed vertical movement. At 0px, tap the left/right half for previous/next page. Each page is one visible text viewport; positions clamp to document boundaries. Paging does not change file contents or selection. Disabling removes paging gesture handlers and restores normal interactions. Vertical scrolling remains available.
+With paging enabled and the editor read-only, swipe right from the text viewport's left half for the previous page, or left from its right half for the next page. The horizontal distance must reach the configured threshold and exceed vertical movement. At 0px, tap the left/right half for previous/next page. Pages follow complete visual rows within the visible text viewport. Partial bottom rows are hidden and start the next page; positions stop when the last document row fits. Paging does not change file contents or selection. Disabling removes paging gesture handlers and restores normal interactions. Vertical scrolling remains available.
 
 The fullscreen clock and battery remain 12px, now 5px below the screen top; the blank gap to text remains 30px. The exit corner still hides after four seconds and remains clickable.
 
@@ -71,3 +71,11 @@ The previous paging extension captured mouse/pointer clicks and disabled text se
 Entering editor fullscreen switches to read-only. The eye control is disabled in fullscreen and the shared read-only command also refuses fullscreen toggles. Exiting stays read-only; click the eye outside fullscreen to edit. An external read-only update that tries to enable editing in fullscreen is reset to read-only.
 
 Validation: 741 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Chromium focus/text input with tap paging enabled, swipe suspension during editing, paging in read-only mode, fullscreen read-only and exit state passed. Android APK build and signature verification passed. Physical tablet IME activation still requires device testing.
+
+## Toolbar icons and complete-row page boundaries
+
+The existing file-tools action now uses a diagonal hammer. The editing-mode indicator now uses an underlined pencil; read-only retains the eye. Custom SVG masks inherit the header color and keep the existing button actions and hit targets.
+
+Paging now measures actual visual rows with DOM Range rectangles, including wrapped rows and paragraph spacing. A row that does not fully fit at the bottom is clipped out of the current page and becomes the start of the next page. Previous-page navigation restores earlier page boundaries. Temporary bottom scroll space allows the final page to start at a complete row without clipping its top; next-page navigation stops when the final document row fits. Spacing/clipping are removed when paging is disabled or editing resumes. Oversized single rows taller than the entire viewport retain scrolling rather than blanking the viewport.
+
+Validation: 742 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Chromium touch tests passed, including 17px text at 1.73 line height, wrapped/unwrapped paragraphs with 13px paragraph spacing, no clipped glyphs at either page edge, document-end behavior, icon rendering and restored editing. Android APK build and signature verification passed. Physical tablet validation remains pending.

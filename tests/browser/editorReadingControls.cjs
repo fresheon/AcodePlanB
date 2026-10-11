@@ -210,15 +210,30 @@ async function run() {
 				touchPoints: [],
 			});
 		}
-		const pageHeight = await page.evaluate(
-			() => reading.view.scrollDOM.clientHeight,
-		);
+		await page.waitForTimeout(150);
+		const nextPageTop = await page.evaluate(() => {
+			const root = reading.view.scrollDOM;
+			const box = root.getBoundingClientRect();
+			const partial = [...reading.view.contentDOM.querySelectorAll(".cm-line")]
+				.map((line) => line.getBoundingClientRect())
+				.find(
+					(row) =>
+						row.top > box.top &&
+						row.top < box.bottom &&
+						row.bottom > box.bottom + 0.5,
+				);
+			return (
+				root.scrollTop + (partial ? partial.top - box.top : root.clientHeight)
+			);
+		});
 		await swipe(360, -100);
+		await page.waitForTimeout(150);
 		assert.equal(
 			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
-			pageHeight,
+			Math.round(nextPageTop),
 		);
 		await swipe(50, 100);
+		await page.waitForTimeout(150);
 		assert.equal(
 			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
 			0,
@@ -235,17 +250,31 @@ async function run() {
 		);
 		await page.evaluate(() => reading.setPaging(true, 0));
 		await page.touchscreen.tap(360, 200);
+		await page.waitForTimeout(150);
 		assert.equal(
 			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
-			pageHeight,
+			Math.round(nextPageTop),
 		);
 		await page.touchscreen.tap(50, 200);
+		await page.waitForTimeout(150);
 		assert.equal(
 			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
 			0,
 		);
 		await page.evaluate(() => reading.setPaging(false, 0));
+		await page.waitForTimeout(150);
+		assert.equal(
+			await page.evaluate(() => reading.view.scrollDOM.style.clipPath),
+			"",
+		);
+		assert.equal(
+			await page.evaluate(() =>
+				reading.view.scrollDOM.style.getPropertyValue("--cm-page-tail"),
+			),
+			"",
+		);
 		await page.touchscreen.tap(360, 200);
+		await page.waitForTimeout(150);
 		assert.equal(
 			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
 			0,
@@ -271,6 +300,114 @@ async function run() {
 		await page.mouse.wheel(0, 250);
 		await page.waitForTimeout(150);
 		assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > 0);
+
+		// Fractional row heights, wrapping and paragraph gaps must never split text.
+		await page.locator("#editor-content-fullscreen-toggle").tap();
+		for (const wrap of [false, true]) {
+			await page.evaluate((wrap) => {
+				const doc = Array.from(
+					{ length: 30 },
+					(_, n) => `Paragraph ${n}: ` + "wrapped words ".repeat(wrap ? 20 : 2),
+				).join("\n\n");
+				reading.setLayout(doc, wrap, 1.73, 13);
+				reading.setPaging(true, 0);
+				reading.view.scrollDOM.scrollTop = 0;
+			}, wrap);
+			await page.waitForTimeout(200);
+			for (let n = 0; n < 24; n++) {
+				const boundary = await page.evaluate(() => {
+					const root = reading.view.scrollDOM,
+						box = root.getBoundingClientRect();
+					const match = root.style.clipPath.match(/inset\(([^)]+)\)/);
+					const clip = match
+						? Number.parseFloat(match[1].split(" ")[2] || match[1])
+						: 0;
+					const effectiveBottom = box.top + root.clientHeight - clip;
+					const glyphs = [
+						...reading.view.contentDOM.querySelectorAll(".cm-line"),
+					].flatMap((line) => {
+						const range = document.createRange();
+						range.selectNodeContents(line);
+						return [...range.getClientRects()].filter(
+							(rect) => rect.width > 0 && rect.height > 0,
+						);
+					});
+					const cuts = glyphs.filter(
+						(rect) =>
+							rect.top < effectiveBottom - 0.5 &&
+							rect.bottom > effectiveBottom + 0.5,
+					);
+					const firstHidden = glyphs
+						.filter((rect) => rect.top >= effectiveBottom - 0.5)
+						.sort((a, b) => a.top - b.top)[0];
+					const terminal =
+						reading.view.viewport.to === reading.view.state.doc.length &&
+						reading.view.contentDOM
+							.querySelector(".cm-line:last-child")
+							.getBoundingClientRect().bottom <=
+							effectiveBottom + 0.5;
+					return {
+						terminal,
+						cuts: cuts.length,
+						scroll: root.scrollTop,
+						next: terminal
+							? root.scrollTop
+							: root.scrollTop + effectiveBottom - box.top,
+						hiddenTop: firstHidden?.top,
+						top: box.top,
+					};
+				});
+				assert.equal(
+					boundary.cuts,
+					0,
+					"No glyph may straddle the visible bottom edge",
+				);
+				await page.touchscreen.tap(360, 200);
+				await page.waitForTimeout(200);
+				const actualNext = await page.evaluate(
+					() => reading.view.scrollDOM.scrollTop,
+				);
+				assert(
+					Math.abs(actualNext - boundary.next) <= 1,
+					JSON.stringify({ wrap, n, boundary, actualNext }),
+				);
+				const topCuts = await page.evaluate(() => {
+					const top = reading.view.scrollDOM.getBoundingClientRect().top;
+					return [...reading.view.contentDOM.querySelectorAll(".cm-line")]
+						.flatMap((line) => {
+							const range = document.createRange();
+							range.selectNodeContents(line);
+							return [...range.getClientRects()];
+						})
+						.filter(
+							(rect) =>
+								rect.width > 0 &&
+								rect.top < top - 0.5 &&
+								rect.bottom > top + 0.5,
+						).length;
+				});
+				assert.equal(
+					topCuts,
+					0,
+					"Next page must not start with a clipped glyph",
+				);
+				if (boundary.terminal) break;
+			}
+			// Previous-page navigation restores an actual earlier page boundary.
+			await page.touchscreen.tap(50, 200);
+			await page.waitForTimeout(200);
+		}
+		await page.screenshot({ path: "/tmp/acode-full-row-preview.png" });
+		await page.touchscreen.tap(392, 20);
+		await page.locator("#editor-read-only-toggle").tap();
+		await page.screenshot({ path: "/tmp/acode-toolbar-preview.png" });
+		assert.equal(await page.locator(".editor-mode-pencil").count(), 1);
+		assert.notEqual(
+			await page
+				.locator(".editor-mode-pencil")
+				.evaluate((el) => getComputedStyle(el, "::before").maskImage),
+			"none",
+		);
 		console.log(
 			"Browser regression passed: real toolbar hit testing, both touch buttons, fullscreen exit, read-only selection guard, scrolling, editable text input, paging swipes, tap paging and paging disable.",
 		);

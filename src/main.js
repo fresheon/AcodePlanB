@@ -633,7 +633,7 @@ async function loadApp() {
 	let $fileMenu;
 	const $editMenuToggler = (
 		<span
-			className="icon edit"
+			className="icon editor-tools-hammer"
 			attr-action="toggle-edit-menu"
 			style={{ fontSize: "1.2em" }}
 		/>

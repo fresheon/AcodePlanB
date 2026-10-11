@@ -401,3 +401,26 @@ header.tile > .editor-reading-button:not(:disabled) {
   }
   .editor-fullscreen-battery-level { display: block; height: 100%; background: currentColor; }
 }
+
+// Distinct tools and editing indicators, tinted with the header foreground.
+.icon.editor-tools-hammer::before, .icon.editor-mode-pencil::before {
+  content: "";
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+.icon.editor-tools-hammer::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg transform='rotate(-35 12 12)'%3E%3Cpath d='M4 3h11l5 4-2 3-5-3v14H9V8H4z'/%3E%3C/g%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg transform='rotate(-35 12 12)'%3E%3Cpath d='M4 3h11l5 4-2 3-5-3v14H9V8H4z'/%3E%3C/g%3E%3C/svg%3E");
+}
+.icon.editor-mode-pencil::before {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m4 14 10-10 4 4L8 18H4zm12-12a1 1 0 0 1 1.4 0l3.6 3.6a1 1 0 0 1 0 1.4l-1.6 1.6-5-5zM3 21h18v2H3z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m4 14 10-10 4 4L8 18H4zm12-12a1 1 0 0 1 1.4 0l3.6 3.6a1 1 0 0 1 0 1.4l-1.6 1.6-5-5zM3 21h18v2H3z'/%3E%3C/svg%3E");
+}

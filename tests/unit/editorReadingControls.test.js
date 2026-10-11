@@ -105,7 +105,7 @@ describe("editor reading controls", () => {
 			control.readOnlyButton,
 			control.fullscreenButton,
 		]);
-		expect(control.readOnlyButton.classList.contains("visibility_off")).toBe(
+		expect(control.readOnlyButton.classList.contains("editor-mode-pencil")).toBe(
 			true,
 		);
 		control.readOnlyButton.click();
@@ -115,7 +115,7 @@ describe("editor reading controls", () => {
 		).toBe(true);
 		file.editable = true;
 		handlers.get("update:read-only")();
-		expect(control.readOnlyButton.classList.contains("visibility_off")).toBe(
+		expect(control.readOnlyButton.classList.contains("editor-mode-pencil")).toBe(
 			true,
 		);
 	});

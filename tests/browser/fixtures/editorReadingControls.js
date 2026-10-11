@@ -9,6 +9,7 @@ import {
 	createEditorReadOnlyExtension,
 	reconfigureEditorReadOnly,
 } from "../../../src/cm/editorReadOnly.ts";
+import { editorAppearance } from "../../../src/cm/editorAppearance.ts";
 import { editorPageTurning } from "../../../src/cm/editorPageTurning.ts";
 import controls from "../../../src/components/editorReadingControls.js";
 window.setupReading = () => {
@@ -16,6 +17,7 @@ window.setupReading = () => {
 		pencil = document.createElement("span");
 	header.className = "tile";
 	header.append(pencil);
+	pencil.className = "icon editor-tools-hammer";
 	const main = document.createElement("main");
 	main.className = "editor-pane-root";
 	main.style.height = "300px";
@@ -34,6 +36,7 @@ window.setupReading = () => {
 	document.body.append(header, main);
 	const ro = new Compartment();
 	const paging = new Compartment();
+	const layout = new Compartment();
 	const view = new EditorView({
 		doc: Array.from(
 			{ length: 200 },
@@ -50,6 +53,7 @@ window.setupReading = () => {
 			}),
 			ro.of(createEditorReadOnlyExtension(true)),
 			paging.of([]),
+			layout.of([]),
 		],
 	});
 	const file = { type: "editor", editable: false, loaded: true };
@@ -77,6 +81,19 @@ window.setupReading = () => {
 		view,
 		main,
 		pane,
+		setLayout(doc, wrap, lineHeight, paragraphSpacing) {
+			view.dispatch({
+				changes: { from: 0, to: view.state.doc.length, insert: doc },
+				effects: layout.reconfigure([
+					wrap ? EditorView.lineWrapping : [],
+					EditorView.theme({
+						"&": { fontSize: "17px" },
+						".cm-content": { lineHeight: String(lineHeight) },
+					}),
+					editorAppearance({ editorParagraphSpacing: paragraphSpacing }),
+				]),
+			});
+		},
 		setPaging(enabled, distance) {
 			view.dispatch({
 				effects: paging.reconfigure(

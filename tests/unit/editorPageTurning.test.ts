@@ -4,6 +4,7 @@ import { EditorView } from "@codemirror/view";
 import {
 	editorPageTurning,
 	isValidPageSwipeDistance,
+	pageBoundary,
 } from "cm/editorPageTurning";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -29,6 +30,9 @@ function setup(distance = 60) {
 		],
 	});
 	views.push(view);
+	vi.spyOn(view, "requestMeasure").mockImplementation((request) => {
+		if (request) request.write?.(request.read(view), view);
+	});
 	const root = view.scrollDOM;
 	Object.defineProperties(root, {
 		clientHeight: { value: 400 },
@@ -36,6 +40,9 @@ function setup(distance = 60) {
 	});
 	vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
 		left: 0,
+		top: 0,
+		bottom: 400,
+		height: 400,
 		width: 800,
 	} as DOMRect);
 	function gesture(x: number, dx = 0, dy = 0, cancel = false) {
@@ -63,6 +70,20 @@ function setup(distance = 60) {
 	return { view, root, gesture, compartment, readOnly };
 }
 describe("editor page turning", () => {
+	it("moves a partially visible row to the next page while keeping exact boundaries", () => {
+		const rows = [
+			{ top: 5, bottom: 25 },
+			{ top: 25, bottom: 45 },
+			{ top: 55, bottom: 75 },
+			{ top: 75, bottom: 95 },
+		];
+		expect(pageBoundary(rows, 0, 90)).toBe(75);
+		expect(pageBoundary(rows, 0, 95)).toBe(95);
+		expect(pageBoundary(rows, 0, 54)).toBe(54);
+		// Oversized rows must not hide the entire viewport or prevent progress.
+		expect(pageBoundary([{ top: 0, bottom: 500 }], 0, 100)).toBe(100);
+		expect(pageBoundary([{ top: 5, bottom: 500 }], 0, 100)).toBe(100);
+	});
 	it("suspends taps, swipes and input blockers during editing without disabling the preference", () => {
 		const { view, root, gesture, readOnly } = setup(0);
 		gesture(600);
@@ -127,9 +148,9 @@ describe("editor page turning", () => {
 		gesture(600);
 		expect(root.scrollTop).toBe(1000);
 		gesture(100);
-		expect(root.scrollTop).toBe(600);
+		expect(root.scrollTop).toBe(800);
 		gesture(600, -80);
-		expect(root.scrollTop).toBe(600);
+		expect(root.scrollTop).toBe(800);
 	});
 	it("applies distance changes and removes gesture handlers when disabled", () => {
 		const { view, root, compartment, gesture } = setup();

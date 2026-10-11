@@ -20,7 +20,7 @@ export default function editorReadingControls({
 	}
 	const readOnlyButton = button(
 		"editor-read-only-toggle",
-		"visibility_off",
+		"editor-mode-pencil",
 		labels.readOnly,
 	);
 	const fullscreenButton = button(
@@ -127,7 +127,7 @@ export default function editorReadingControls({
 		}
 		const readOnly = !file.editable;
 		readOnlyButton.classList.toggle("remove_red_eyevisibility", readOnly);
-		readOnlyButton.classList.toggle("visibility_off", !readOnly);
+		readOnlyButton.classList.toggle("editor-mode-pencil", !readOnly);
 		readOnlyButton.setAttribute("aria-pressed", String(readOnly));
 		const label = readOnly ? labels.edit : labels.readOnly;
 		readOnlyButton.title = label;

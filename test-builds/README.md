@@ -58,7 +58,7 @@ The browser regression verifies a 12px status row 5px below the screen top, exac
 
 Settings → Editor settings now includes Page turning, immediately followed by Page swipe distance (px). Page turning defaults to off; the distance defaults to 60px and accepts finite nonnegative numbers. Changes persist and immediately reconfigure open editor panes, in ordinary and fullscreen layouts.
 
-With paging enabled and the editor read-only, swipe left anywhere for the previous page, or right anywhere for the next page. The horizontal distance must reach the configured threshold and exceed vertical movement. At 0px, tap the left/right half for previous/next page. Pages follow complete visual rows within the visible text viewport. Partial bottom rows are hidden and start the next page; positions stop when the last document row fits. Paging does not change file contents or selection. Disabling removes paging gesture handlers and restores normal interactions. Vertical scrolling remains available.
+With paging enabled and the editor read-only, swipe left anywhere for the next page, or right anywhere for the previous page. The horizontal distance must reach the configured threshold and exceed vertical movement. At 0px, tap the left/right half for previous/next page. Pages follow complete visual rows within the visible text viewport. Partial bottom rows are hidden and start the next page; positions stop when the last document row fits. Paging does not change file contents or selection. Disabling removes paging gesture handlers and restores normal interactions. Vertical scrolling remains available.
 
 The fullscreen clock and battery remain 12px, now 5px below the screen top; the blank gap to text remains 30px. The exit corner still hides after four seconds and remains clickable.
 
@@ -130,6 +130,12 @@ Validation: 748 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Android
 
 ## Swipe direction independent of screen half
 
-Horizontal paging now uses swipe direction only: left means previous page and right means next page, regardless of the starting screen half. Existing minimum distance and horizontal-over-vertical checks still apply. The page-turning descriptions in English, Simplified Chinese and Traditional Chinese reflect the new directions. At 0px, tap paging remains left-half previous/right-half next. Read-only gating, fullscreen vertical lock and complete-row page boundaries retain their existing behavior.
+Horizontal paging now uses swipe direction only: left means next page and right means previous page, regardless of the starting screen half. Existing minimum distance and horizontal-over-vertical checks still apply. The page-turning descriptions in English, Simplified Chinese and Traditional Chinese reflect the new directions. At 0px, tap paging remains left-half previous/right-half next. Read-only gating, fullscreen vertical lock and complete-row page boundaries retain their existing behavior.
 
 Validation: 748 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Android debug build and signature verification passed. Unit and Chromium tests exercise left/right swipes from both halves, below-threshold movements, tap paging, editing suspension and fullscreen vertical lock, alongside the existing display and fullscreen regressions. Physical tablet validation remains pending.
+
+## Updated swipe directions
+
+Per the latest requested direction, left swipes advance to the next page and right swipes return to the previous page from either half of the viewport. All three localized descriptions and the settings fallback match this behavior. 0px tap paging remains unchanged.
+
+Validation: 748 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Chromium touch regression (both directions from both halves, vertical lock and existing reading/editing checks), Android debug build and APK signature verification passed. Physical tablet validation remains pending.

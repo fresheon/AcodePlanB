@@ -902,7 +902,7 @@
 	"editor-reading-fullscreen": "Fullscreen text",
 	"editor-reading-exit": "Exit fullscreen",
 	"editor-page-turning": "Page turning",
-	"editor-page-turning-info": "Only active in read-only mode. Swipe left anywhere for the previous page; swipe right anywhere for the next page. Editing keeps normal taps and vertical scrolling.",
+	"editor-page-turning-info": "Only active in read-only mode. Swipe left anywhere for the next page; swipe right anywhere for the previous page. Editing keeps normal taps and vertical scrolling.",
 	"editor-page-swipe-distance": "Page swipe distance",
 	"editor-page-swipe-distance-info": "Minimum horizontal swipe distance in px. Set 0 to tap the left/right half for previous/next page.",
 	"editor-selection-color": "Selected text highlight color",

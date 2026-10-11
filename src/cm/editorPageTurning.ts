@@ -208,7 +208,7 @@ export function editorPageTurning(values: {
 						: Math.abs(dx) >= distance &&
 							Math.abs(dx) > dy;
 				if (turn) {
-					pending = distance === 0 ? (start.left ? -1 : 1) : (dx < 0 ? -1 : 1);
+					pending = distance === 0 ? (start.left ? -1 : 1) : (dx < 0 ? 1 : -1);
 					schedule();
 					event.preventDefault();
 				}

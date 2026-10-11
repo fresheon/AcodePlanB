@@ -114,13 +114,13 @@ describe("editor page turning", () => {
 		for (const value of ["", " ", -1, Infinity, "bad", null, false])
 			expect(isValidPageSwipeDistance(value)).toBe(false);
 	});
-	it("turns right swipes forward and left swipes backward from either screen half", () => {
+	it("turns left swipes forward and right swipes backward from either screen half", () => {
 		const { root, gesture, view } = setup();
 		const selection = view.state.selection;
 		for (const x of [100, 600]) {
-			gesture(x, 60);
-			expect(root.scrollTop).toBe(400);
 			gesture(x, -60);
+			expect(root.scrollTop).toBe(400);
+			gesture(x, 60);
 			expect(root.scrollTop).toBe(0);
 		}
 		for (const [x, dx, dy] of [

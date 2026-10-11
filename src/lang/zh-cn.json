@@ -897,5 +897,8 @@
 	"editor-appearance-left": "左侧留白",
 	"editor-appearance-right": "右侧留白",
 	"editor-appearance-reset": "恢复默认外观",
-	"editor-appearance-reset-info": "颜色跟随主题，恢复段间距和左右留白。字号和行高保持不变。"
+	"editor-appearance-reset-info": "颜色跟随主题，恢复段间距和左右留白。字号和行高保持不变。",
+	"editor-reading-edit": "切换到编辑模式",
+	"editor-reading-fullscreen": "正文全屏",
+	"editor-reading-exit": "退出正文全屏"
 }

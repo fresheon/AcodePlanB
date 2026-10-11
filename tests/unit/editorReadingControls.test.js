@@ -1,0 +1,66 @@
+// @vitest-environment happy-dom
+import editorReadingControls from "components/editorReadingControls";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+const controls = [];
+afterEach(() => {
+	for (const control of controls.splice(0)) control.exit();
+	document.body.replaceChildren();
+});
+function setup() {
+	const header = document.createElement("header");
+	const pencil = document.createElement("span");
+	header.append(pencil);
+	const container = document.createElement("main");
+	const element = document.createElement("section");
+	container.append(element);
+	document.body.append(header, container);
+	const file = { type: "editor", editable: true, loaded: true };
+	const pane = { element, editor: { contentDOM: document.createElement("div"), requestMeasure: vi.fn() } };
+	const handlers = new Map();
+	const manager = { activeFile: file, getFilePane: () => pane, on: (events, handler) => {
+		for (const name of [].concat(events)) handlers.set(name, handler);
+	} };
+	const exec = vi.fn(() => { file.editable = !file.editable; });
+	const control = editorReadingControls({ manager, header, pencil, exec, labels: { readOnly: "read", edit: "edit", fullscreen: "full", exit: "exit" } });
+	control.update();
+	controls.push(control);
+	return { control, file, manager, header, pencil, container, pane, exec, handlers };
+}
+describe("editor reading controls", () => {
+	it("places buttons beside the pencil and uses the existing read-only command", () => {
+		const { control, header, pencil, exec, file, handlers } = setup();
+		expect([...header.children]).toEqual([pencil, control.readOnlyButton, control.fullscreenButton]);
+		expect(control.readOnlyButton.classList.contains("visibility_off")).toBe(true);
+		control.readOnlyButton.click();
+		expect(exec).toHaveBeenCalledWith("read-only");
+		expect(control.readOnlyButton.classList.contains("remove_red_eyevisibility")).toBe(true);
+		file.editable = true;
+		handlers.get("update:read-only")();
+		expect(control.readOnlyButton.classList.contains("visibility_off")).toBe(true);
+	});
+	it("restores the exact pane position after a corner click without changing editability", () => {
+		const { control, container, pane, file } = setup();
+		const sibling = document.createElement("span");
+		container.append(sibling);
+		control.fullscreenButton.click();
+		expect(pane.element.parentNode).toBe(document.body);
+		expect(pane.element.classList.contains("editor-content-fullscreen")).toBe(true);
+		control.exitButton.click();
+		expect([...container.children]).toEqual([pane.element, sibling]);
+		expect(file.editable).toBe(true);
+		expect(control.exitButton.isConnected).toBe(false);
+	});
+	it("exits on Escape and on file changes, including non-editor tabs", () => {
+		const { control, manager, pane, container, handlers } = setup();
+		control.enter();
+		document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+		expect(pane.element.parentNode).toBe(container);
+		control.enter();
+		manager.activeFile = { type: "terminal" };
+		handlers.get("switch-file")();
+		expect(pane.element.parentNode).toBe(container);
+		expect(control.readOnlyButton.isConnected).toBe(false);
+		expect(control.fullscreenButton.isConnected).toBe(false);
+	});
+});

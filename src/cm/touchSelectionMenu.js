@@ -3,7 +3,6 @@ import { EditorSelection } from "@codemirror/state";
 import {
 	focusEditorIfEditable,
 	placeReadOnlyCursor,
-	resolveReadOnlyContextSelection,
 	shouldCommitReadOnlyTap,
 } from "cm/editorReadOnly";
 import {
@@ -371,14 +370,10 @@ class TouchSelectionMenuController {
 		if (this.#isIgnoredPointerTarget(event.target)) return;
 		this.#cancelReadOnlyTap();
 		if (this.#isReadOnly()) {
-			const pos = this.#safePosAtCoords(event.clientX, event.clientY);
-			if (pos != null) {
-				const range = resolveReadOnlyContextSelection(this.#view.state, pos);
-				this.#view.dispatch({
-					selection: EditorSelection.create([range]),
-					userEvent: "select.pointer",
-				});
-			}
+			event.preventDefault();
+			event.stopPropagation();
+			this.#hideMenu(true);
+			return;
 		}
 		event.preventDefault();
 		event.stopPropagation();
@@ -400,6 +395,12 @@ class TouchSelectionMenuController {
 		}
 		if (target instanceof Node && this.#view.dom.contains(target)) {
 			this.#dismissedSelection = null;
+			if (this.#isReadOnly()) {
+				this.#pointerSelectionSession = null;
+				this.#readOnlyTapSession = null;
+				this.#hideMenu(true);
+				return;
+			}
 			this.#capturePointerSelection(event);
 			this.#captureReadOnlyTap(event);
 			this.#isPointerInteracting = true;
@@ -610,7 +611,8 @@ class TouchSelectionMenuController {
 	}
 
 	#shouldShowMenu() {
-		if (this.#isScrolling || this.#isPointerInteracting) return false;
+		if (this.#isReadOnly() || this.#isScrolling || this.#isPointerInteracting)
+			return false;
 		if (!this.#view.hasFocus && !this.#isReadOnly()) return false;
 		if (
 			!this.#menuRequested &&

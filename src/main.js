@@ -25,6 +25,7 @@ import {
 	initModes,
 } from "cm/modelist";
 import Contextmenu from "components/contextmenu";
+import editorReadingControls from "components/editorReadingControls";
 import Sidebar from "components/sidebar";
 import tile from "components/tile";
 import toast from "components/toast";
@@ -673,6 +674,18 @@ async function loadApp() {
 	const folders = helpers.parseJSON(localStorage.folders);
 	const files = helpers.parseJSON(localStorage.files) || [];
 	const editorManager = await EditorManager($header, $main);
+	const readingControls = editorReadingControls({
+		manager: editorManager,
+		header: $header,
+		pencil: $editMenuToggler,
+		exec: (command) => acode.exec(command),
+		labels: {
+			readOnly: strings["read only"],
+			edit: strings["editor-reading-edit"] || "Switch to editing",
+			fullscreen: strings["editor-reading-fullscreen"] || "Fullscreen text",
+			exit: strings["editor-reading-exit"] || "Exit fullscreen",
+		},
+	});
 
 	const setMainMenu = () => {
 		if ($mainMenu) {
@@ -845,6 +858,8 @@ async function loadApp() {
 		} else {
 			$editMenuToggler.remove();
 		}
+
+		readingControls.update();
 
 		if (mode === "switch-file") {
 			if (settings.value.rememberFiles && activeFile) {

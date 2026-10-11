@@ -40,16 +40,30 @@ const readOnlyInputGuard = EditorView.inputHandler.of((view) => {
 
 const readOnlyUserChangeFilter = EditorState.transactionFilter.of(
 	(transaction) => {
-		if (!transaction.startState.readOnly || !transaction.docChanged) {
+		if (!transaction.startState.readOnly) {
 			return transaction;
 		}
 
 		const userEvent = transaction.annotation(Transaction.userEvent);
-		return isReadOnlyUserChange(userEvent) ? [] : transaction;
+		if (transaction.selection && userEvent?.startsWith("select.pointer"))
+			return [];
+		return transaction.docChanged && isReadOnlyUserChange(userEvent)
+			? []
+			: transaction;
 	},
 );
 
 const readOnlyFocusGuard = EditorView.domEventHandlers({
+	mousedown(event, view) {
+		if (!view.state.readOnly) return false;
+		event.preventDefault();
+		return true;
+	},
+	contextmenu(event, view) {
+		if (!view.state.readOnly) return false;
+		event.preventDefault();
+		return true;
+	},
 	focus(event, view) {
 		event.preventDefault();
 		blurEditorIfReadOnly(view, view.state.readOnly);
@@ -68,9 +82,21 @@ const readOnlyCursor = [
 	EditorView.theme({
 		"&.cm-read-only > .cm-scroller > .cm-cursorLayer": {
 			animation: "none",
+			display: "none !important",
+		},
+		"&.cm-read-only .cm-selectionLayer": { display: "none !important" },
+		"&.cm-read-only .cm-activeLine, &.cm-read-only .cm-activeLineGutter, &.cm-read-only .cm-selectionMatch":
+			{ backgroundColor: "transparent !important" },
+		"&.cm-read-only .cm-content": {
+			userSelect: "none",
+			WebkitUserSelect: "none",
+			caretColor: "transparent",
+		},
+		"&.cm-read-only .cm-content ::selection": {
+			backgroundColor: "transparent",
 		},
 		"&.cm-read-only > .cm-scroller > .cm-cursorLayer .cm-cursor": {
-			display: "block",
+			display: "none !important",
 		},
 	}),
 ];
@@ -154,19 +180,9 @@ export function shouldCommitReadOnlyTap(
 	return Math.hypot(end.x - start.x, end.y - start.y) <= maxDistance;
 }
 
-/** Place the visual read-only cursor without focusing or editing. */
-export function placeReadOnlyCursor(view: EditorView, pos: number): boolean {
-	if (!view.state.readOnly) return false;
-	const position = Math.max(0, Math.min(pos, view.state.doc.length));
-	const selection = EditorSelection.single(position);
-	if (!view.state.selection.eq(selection)) {
-		view.dispatch({
-			selection,
-			userEvent: "select.pointer",
-		});
-	}
-	blurEditorIfReadOnly(view, true);
-	return true;
+/** Reading mode no longer permits pointer placement of a cursor. */
+export function placeReadOnlyCursor(_view: EditorView, _pos: number): boolean {
+	return false;
 }
 
 /** Resolve the text selected by a read-only long-press. */

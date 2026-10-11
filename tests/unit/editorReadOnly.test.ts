@@ -72,7 +72,7 @@ describe("editor read-only configuration", () => {
 		expect(view.state.doc.toString()).toBe(originalDocument);
 	});
 
-	it("reveals CodeMirror's static cursor only in read-only mode", () => {
+	it("hides CodeMirror cursors in read-only mode", () => {
 		const { compartment, view } = createEditor(true);
 		const cursorLayer = view.dom.querySelector<HTMLElement>(".cm-cursorLayer");
 		expect(cursorLayer).not.toBeNull();
@@ -80,7 +80,7 @@ describe("editor read-only configuration", () => {
 		cursor.className = "cm-cursor cm-cursor-primary";
 		cursorLayer!.append(cursor);
 
-		expect(getComputedStyle(cursor).display).toBe("block");
+		expect(getComputedStyle(cursor).display).toBe("none");
 		expect(view.hasFocus).toBe(false);
 
 		reconfigureEditorReadOnly(view, compartment, false);
@@ -146,33 +146,29 @@ describe("editor read-only configuration", () => {
 		expect(editable.hasFocus).toBe(true);
 	});
 
-	it("places a read-only cursor without editing or focusing", () => {
+	it("declines pointer cursor placement and pointer selection in read-only mode", () => {
 		const { view } = createEditor(true);
 		view.dispatch({ selection: EditorSelection.range(0, 4) });
-		const originalDocument = view.state.doc.toString();
-
-		expect(placeReadOnlyCursor(view, 7)).toBe(true);
-		expect(view.state.selection.main.empty).toBe(true);
-		expect(view.state.selection.main.head).toBe(7);
-		expect(view.state.doc.toString()).toBe(originalDocument);
+		const before = view.state.selection;
+		expect(placeReadOnlyCursor(view, 7)).toBe(false);
+		view.dispatch({
+			selection: EditorSelection.range(5, 9),
+			userEvent: "select.pointer",
+		});
+		expect(view.state.selection.eq(before)).toBe(true);
+		expect(view.state.doc.toString()).toBe("read only content");
 		expect(view.hasFocus).toBe(false);
-
-		expect(placeReadOnlyCursor(view, 2)).toBe(true);
-		expect(view.state.selection.main.head).toBe(2);
-		expect(placeReadOnlyCursor(view, 2)).toBe(true);
-		expect(view.state.doc.toString()).toBe(originalDocument);
 	});
 
-	it("clamps cursor placement in an empty document and declines editable views", () => {
-		const readOnly = createEditor(true, "").view;
-		const editable = createEditor(false).view;
-
-		expect(placeReadOnlyCursor(readOnly, 10)).toBe(true);
-		expect(readOnly.state.selection.main.head).toBe(0);
-		expect(readOnly.hasFocus).toBe(false);
-
-		expect(placeReadOnlyCursor(editable, 5)).toBe(false);
-		expect(editable.state.selection.main.head).toBe(0);
+	it("allows pointer selection again after exiting read-only mode", () => {
+		const { view, compartment } = createEditor(true);
+		reconfigureEditorReadOnly(view, compartment, false);
+		view.dispatch({
+			selection: EditorSelection.range(1, 4),
+			userEvent: "select.pointer",
+		});
+		expect(view.state.selection.main.from).toBe(1);
+		expect(view.state.selection.main.to).toBe(4);
 	});
 
 	it("accepts only uncancelled short primary taps", () => {

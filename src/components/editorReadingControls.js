@@ -68,9 +68,25 @@ export default function editorReadingControls({
 	let placeholder = null;
 	let fullscreenFile = null;
 
+	function captureScroll(pane) {
+		const view = pane.editor;
+		if (!view?.scrollDOM) return () => {};
+		const { scrollTop, scrollLeft } = view.scrollDOM;
+		const snapshot = view.scrollSnapshot();
+		return () => {
+			// Reparenting disconnects the scroller and resets browser scroll offsets.
+			// Restore offsets immediately and let CodeMirror retain the text anchor
+			// while measuring the new viewport (including wrapped paragraphs).
+			view.scrollDOM.scrollTop = scrollTop;
+			view.scrollDOM.scrollLeft = scrollLeft;
+			view.dispatch({ effects: snapshot });
+		};
+	}
+
 	function exit() {
 		if (!fullscreenPane) return;
 		const pane = fullscreenPane;
+		const restoreScroll = captureScroll(pane);
 		if (placeholder?.parentNode) placeholder.replaceWith(pane.element);
 		pane.element.classList.remove("editor-content-fullscreen");
 		document.body.classList.remove("editor-content-fullscreen-mode");
@@ -79,6 +95,7 @@ export default function editorReadingControls({
 		status.remove();
 		native("editor-immersive", [false], () => pane.editor?.requestMeasure());
 		exitButton.remove();
+		restoreScroll();
 		fullscreenPane = placeholder = fullscreenFile = null;
 		fullscreenButton.setAttribute("aria-pressed", "false");
 		pane.editor?.requestMeasure();
@@ -97,6 +114,7 @@ export default function editorReadingControls({
 		if (file?.type !== "editor" || file.loading) return;
 		const pane = manager.getFilePane(file);
 		if (!pane?.element?.parentNode) return;
+		const restoreScroll = captureScroll(pane);
 		if (file.editable) exec("read-only");
 		fullscreenFile = file;
 		fullscreenPane = pane;
@@ -107,6 +125,7 @@ export default function editorReadingControls({
 		document.body.classList.add("editor-content-fullscreen-mode");
 		exitButton.classList.remove("hint-hidden");
 		document.body.append(pane.element, status, exitButton);
+		restoreScroll();
 		native("editor-immersive", [true], () => pane.editor?.requestMeasure());
 		refreshStatus();
 		statusTimer = setInterval(refreshStatus, 15000);

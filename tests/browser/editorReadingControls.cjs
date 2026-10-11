@@ -62,6 +62,55 @@ async function run() {
 		await page.evaluate(() => setupReading());
 		await page.waitForTimeout(150);
 
+		// Preserve the visible text anchor, including a page reached in fullscreen.
+		const scrollPosition = () => page.evaluate(() => {
+			const view = reading.view;
+			const top = view.scrollDOM.getBoundingClientRect().top;
+			const line = [...view.contentDOM.querySelectorAll(".cm-line")]
+				.find((el) => el.getBoundingClientRect().bottom > top + 1);
+			return { pos: view.posAtDOM(line), offset: line.getBoundingClientRect().top - top };
+		});
+		const originalDocument = await page.evaluate(() => reading.view.state.doc.toString());
+		for (const scenario of [
+			{ editable: false, wrap: false },
+			{ editable: true, wrap: false },
+			{ editable: false, wrap: true },
+			{ editable: true, wrap: true },
+		]) {
+			const { editable, wrap } = scenario;
+			await page.evaluate((wrap) => {
+				reading.setLayout(Array.from({ length: 200 }, (_, i) =>
+					`paragraph ${i} ` + "long wrapped text ".repeat(8)).join("\n"), wrap, 1.73, 18);
+			}, wrap);
+			if (editable) await page.locator("#editor-read-only-toggle").tap();
+			await page.evaluate(() => {
+				reading.setPaging(true, 0);
+				reading.view.scrollDOM.scrollTop = 900;
+			});
+			await page.waitForTimeout(200);
+			const beforeEntry = await scrollPosition();
+			await page.locator("#editor-content-fullscreen-toggle").tap();
+			await page.waitForTimeout(200);
+			const afterEntry = await scrollPosition();
+			assert.equal(afterEntry.pos, beforeEntry.pos, "entry must retain visible line");
+			assert(Math.abs(afterEntry.offset - beforeEntry.offset) < 1);
+			await page.touchscreen.tap(360, 300);
+			await page.waitForTimeout(200);
+			const beforeExit = await scrollPosition();
+			assert(beforeExit.pos > afterEntry.pos, "fullscreen tap must advance page");
+			await page.touchscreen.tap(392, 20);
+			await page.waitForTimeout(200);
+			const afterExit = await scrollPosition();
+			assert.equal(afterExit.pos, beforeExit.pos, "exit must retain current page");
+			assert(Math.abs(afterExit.offset - beforeExit.offset) < 1);
+		}
+		await page.evaluate((doc) => {
+			reading.setLayout(doc, false, 1.4, 0);
+			reading.setPaging(false, 60);
+			reading.view.scrollDOM.scrollTop = 0;
+		}, originalDocument);
+		await page.waitForTimeout(200);
+
 		// Use the real header.tile and compiled application CSS: .click() in a
 		// DOM-only unit test bypasses hit testing and misses pointer-events bugs.
 		for (const id of [

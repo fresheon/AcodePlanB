@@ -93,3 +93,9 @@ Validation: 745 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Android
 Paragraph spacing previously recognized only paragraphs separated by blank lines, so changing the setting had no effect on text with one manual line break between paragraphs. Each nonempty document line after the first now receives the configured extra spacing. Automatic wrapping remains governed by line height; existing blank lines are preserved, and 0px restores the original spacing.
 
 Validation: 746 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Android debug APK build and signature verification passed. Chromium verified 0px, 18px and 40px spacing and resetting to 0px with and without blank separators, with wrapping enabled and disabled, plus the existing editing, fullscreen and complete-row paging checks. Settings save/relaunch tests verify 0px, 18px, 40px and 80px persistence. Physical tablet validation remains pending.
+
+## Preserve reading position across fullscreen transitions
+
+Moving the pane between its original container and the fullscreen body disconnected its scroll element, resetting browser scroll offsets. Both transitions now capture the current CodeMirror scroll snapshot before changing read-only state or moving the pane, restore horizontal/vertical offsets immediately, and dispatch the snapshot to preserve the visible text anchor during measurement. Exiting captures the current fullscreen page, rather than restoring the position from before entering.
+
+Validation: 746 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Android debug APK build and signature verification passed. Chromium checks cover entry from reading and editing modes, page advancement in fullscreen and exit at the new page, with wrapping on/off and 18px paragraph spacing, checking the same top document position and subpixel offset. Existing editing, fullscreen and paging regressions passed. Physical tablet validation remains pending.

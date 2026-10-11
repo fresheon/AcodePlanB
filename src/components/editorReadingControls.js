@@ -57,11 +57,6 @@ export default function editorReadingControls({
 		).color;
 		native("editor-status", [], (data) => {
 			if (fullscreenPane !== pane) return;
-			status.style.setProperty("--status-height", `${data.height || 24}px`);
-			status.style.setProperty(
-				"--status-icon-size",
-				`${data.iconSize || 16}px`,
-			);
 			if (Number.isFinite(data.battery)) {
 				level.style.width = `${data.battery}%`;
 				percentage.textContent = `${data.charging ? "ϟ " : ""}${data.battery}%`;

@@ -120,6 +120,13 @@ async function run() {
 		assert.deepEqual(rect, { x: 0, y: 0, width: 412, height: 732 });
 		assert.equal(await page.locator(".editor-pane-tabs").isVisible(), false);
 		assert.equal(await page.locator("#editor-fullscreen-status").count(), 1);
+		assert.equal(await page.locator("#editor-fullscreen-status").evaluate(el => getComputedStyle(el).fontSize), "12px");
+		const statusRect = await page.locator("#editor-fullscreen-status").boundingBox();
+		const scrollerRect = await page.locator(".cm-scroller").boundingBox();
+		assert.equal(statusRect.y, 0);
+		assert.equal(statusRect.height, 12);
+		assert.equal(scrollerRect.y - (statusRect.y + statusRect.height), 30);
+		assert.equal(scrollerRect.y + scrollerRect.height, 732);
 		await page.waitForTimeout(4000);
 		assert.equal(await page.locator("#editor-content-fullscreen-exit").evaluate(el => getComputedStyle(el).opacity), "0");
 		assert.equal(await page.evaluate(() => document.elementFromPoint(392, 20).id), "editor-content-fullscreen-exit");

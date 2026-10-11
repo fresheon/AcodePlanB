@@ -42,8 +42,14 @@ The updated browser regression uses the actual `header.tile` and compiled `www/b
 
 Entering editor fullscreen now hides Android status and navigation bars using WindowInsetsControllerCompat. Exiting restores their previous visibility and behavior; returning to the app re-applies immersive mode while reading. Android still permits temporary system bars through its system swipe gesture.
 
-A top-left clock and battery indicator use the editor's default foreground color. Battery and clock refresh every 15 seconds. Status row and icon dimensions are read from Android resources; devices that do not expose an icon-size resource use a 16dp fallback (24dp row fallback). Vendor-specific SystemUI dimensions need device verification.
+A top-left clock and battery indicator use the editor's default foreground color. Battery and clock refresh every 15 seconds. Time, battery icon and percentage now use a fixed 12px size. The editor reserves a 12px status row followed by 30px of blank space before the scrollable text.
 
 The top-right exit hint becomes transparent after four seconds, while its 48px corner hit area remains active. Entering again resets the hint. Timers are cleared on exit.
 
 Validation for this update: 735 tests passed, 1 skipped; TypeScript, Biome, Rspack, Chromium touch regression (including invisible corner hit testing), Android APK build and signature verification passed. Physical tablet system-bar behavior and visual matching remain to be tested.
+
+## Status-bar background and spacing correction
+
+Cordova 15 creates a separate native view tagged `statusBarView` and uses its visibility when calculating WebView margins. Reading fullscreen now hides that view as well as Android bars, applies the fullscreen window flag and requests a new inset calculation. Previous background visibility and fullscreen flag are restored on exit.
+
+The browser regression verifies a 12px status row at the top, exactly 30px between that row and the text viewport, and the text viewport bottom fitting the screen. Actual tablet behavior still requires device verification.

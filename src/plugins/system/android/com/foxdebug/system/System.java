@@ -33,6 +33,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.WindowInsetsController;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
@@ -84,6 +85,9 @@ public class System extends CordovaPlugin {
   private int savedEditorSystemUi;
   private int savedEditorBars;
   private int savedEditorBehavior;
+  private View editorStatusBarBackground;
+  private int savedEditorStatusVisibility;
+  private boolean savedEditorFullscreenFlag;
 
   private void setEditorImmersive(boolean enabled) {
     Window window = activity.getWindow();
@@ -91,6 +95,12 @@ public class System extends CordovaPlugin {
     WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, decor);
     if (enabled && !editorImmersive) {
       savedEditorSystemUi = decor.getSystemUiVisibility();
+      savedEditorFullscreenFlag = (window.getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
+      // Cordova 15 draws its own status-bar background and uses its visibility
+      // to decide the WebView top margin. Hiding Android icons alone leaves it.
+      editorStatusBarBackground = decor.findViewWithTag("statusBarView");
+      if (editorStatusBarBackground != null)
+        savedEditorStatusVisibility = editorStatusBarBackground.getVisibility();
       savedEditorBehavior = controller.getSystemBarsBehavior();
       WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(decor);
       savedEditorBars = 0;
@@ -100,15 +110,23 @@ public class System extends CordovaPlugin {
         savedEditorBars |= WindowInsetsCompat.Type.navigationBars();
     }
     if (enabled) {
+      if (editorStatusBarBackground != null) editorStatusBarBackground.setVisibility(View.GONE);
+      window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
       controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
       controller.hide(WindowInsetsCompat.Type.systemBars());
     } else if (editorImmersive) {
+      if (editorStatusBarBackground != null)
+        editorStatusBarBackground.setVisibility(savedEditorStatusVisibility);
+      if (!savedEditorFullscreenFlag) window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
       controller.hide(WindowInsetsCompat.Type.systemBars());
       controller.show(savedEditorBars);
       controller.setSystemBarsBehavior(savedEditorBehavior);
       if (SDK_INT < 30) decor.setSystemUiVisibility(savedEditorSystemUi);
     }
     editorImmersive = enabled;
+    // Re-run Cordova's margin calculation after changing the background view.
+    androidx.core.view.ViewCompat.requestApplyInsets(webView.getView());
+    androidx.core.view.ViewCompat.requestApplyInsets(decor);
   }
 
   @Override
@@ -126,12 +144,6 @@ public class System extends CordovaPlugin {
       if (level >= 0 && scale > 0) result.put("battery", Math.round(level * 100f / scale));
       result.put("charging", battery.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0);
     }
-    android.content.res.Resources resources = activity.getResources();
-    float density = resources.getDisplayMetrics().density;
-    int heightId = resources.getIdentifier("status_bar_height", "dimen", "android");
-    int iconId = resources.getIdentifier("status_bar_icon_size", "dimen", "android");
-    result.put("height", heightId == 0 ? 24 : resources.getDimensionPixelSize(heightId) / density);
-    result.put("iconSize", iconId == 0 ? 16 : resources.getDimensionPixelSize(iconId) / density);
     callback.success(result);
   }
 

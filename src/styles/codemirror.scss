@@ -345,6 +345,8 @@ header.tile > .editor-reading-button:not(:disabled) {
   margin: 0;
   border: 0;
   .editor-pane-tabs { display: none; }
+  // A 12px status row followed by 30px of blank space above the text.
+  .cm-editor { padding-top: 42px; box-sizing: border-box; }
   .editor-pane-content, .editor-container { min-height: 0; flex: 1; }
 }
 
@@ -372,8 +374,8 @@ header.tile > .editor-reading-button:not(:disabled) {
   top: 0;
   left: 8px;
   z-index: 10001;
-  height: var(--status-height, 24px);
-  font-size: var(--status-icon-size, 16px);
+  height: 12px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   gap: 8px;

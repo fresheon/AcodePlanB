@@ -3,6 +3,7 @@ import {
 	isValidEditorSpacing,
 } from "cm/editorAppearance";
 import { isValidEditorLineHeight } from "cm/editorFontTheme";
+import { isValidPageSwipeDistance } from "cm/editorPageTurning";
 import { getThemeConfig } from "cm/themes";
 import settingsPage from "components/settingsPage";
 import config from "lib/config";
@@ -44,6 +45,33 @@ export default function editorSettings() {
 		category: categories.textLayout,
 	});
 	const items = [
+		{
+			key: "editorPageTurning",
+			text: appearanceLabel("editor-page-turning", "Page turning"),
+			checkbox: values.editorPageTurning,
+			info: appearanceLabel(
+				"editor-page-turning-info",
+				"Swipe right on the left half for the previous page; swipe left on the right half for the next page.",
+			),
+			category: categories.scrolling,
+		},
+		{
+			key: "editorPageSwipeDistance",
+			text: appearanceLabel(
+				"editor-page-swipe-distance",
+				"Page swipe distance",
+			),
+			value: values.editorPageSwipeDistance ?? 60,
+			valueText: (value) => `${value}px`,
+			prompt: `${appearanceLabel("editor-page-swipe-distance", "Page swipe distance")} (px ≥ 0)`,
+			promptType: "number",
+			promptOptions: { test: isValidPageSwipeDistance },
+			info: appearanceLabel(
+				"editor-page-swipe-distance-info",
+				"Minimum horizontal swipe distance in px. Set 0 to tap the left/right half for previous/next page.",
+			),
+			category: categories.scrolling,
+		},
 		{
 			key: "editorBackgroundColor",
 			text: appearanceLabel(
@@ -341,6 +369,11 @@ export default function editorSettings() {
 	 * @param {string} value
 	 */
 	function callback(key, value) {
+		if (key === "editorPageSwipeDistance") {
+			if (isValidPageSwipeDistance(value))
+				appSettings.update({ [key]: Number(value) });
+			return;
+		}
 		if (key === "resetEditorAppearance") {
 			appSettings.update({
 				editorBackgroundColor: null,

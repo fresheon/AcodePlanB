@@ -900,5 +900,9 @@
 	"editor-appearance-reset-info": "Follow theme colors and restore paragraph spacing and text padding. Font size and line height are preserved.",
 	"editor-reading-edit": "Switch to editing",
 	"editor-reading-fullscreen": "Fullscreen text",
-	"editor-reading-exit": "Exit fullscreen"
+	"editor-reading-exit": "Exit fullscreen",
+	"editor-page-turning": "Page turning",
+	"editor-page-turning-info": "Swipe right on the left half for the previous page; swipe left on the right half for the next page.",
+	"editor-page-swipe-distance": "Page swipe distance",
+	"editor-page-swipe-distance-info": "Minimum horizontal swipe distance in px. Set 0 to tap the left/right half for previous/next page."
 }

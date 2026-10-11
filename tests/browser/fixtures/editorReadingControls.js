@@ -9,6 +9,7 @@ import {
 	createEditorReadOnlyExtension,
 	reconfigureEditorReadOnly,
 } from "../../../src/cm/editorReadOnly.ts";
+import { editorPageTurning } from "../../../src/cm/editorPageTurning.ts";
 import controls from "../../../src/components/editorReadingControls.js";
 window.setupReading = () => {
 	const header = document.createElement("header"),
@@ -32,6 +33,7 @@ window.setupReading = () => {
 	main.append(element);
 	document.body.append(header, main);
 	const ro = new Compartment();
+	const paging = new Compartment();
 	const view = new EditorView({
 		doc: Array.from(
 			{ length: 200 },
@@ -47,6 +49,7 @@ window.setupReading = () => {
 				".cm-scroller": { overflow: "auto", height: "100%" },
 			}),
 			ro.of(createEditorReadOnlyExtension(true)),
+			paging.of([]),
 		],
 	});
 	const file = { type: "editor", editable: false, loaded: true };
@@ -68,5 +71,21 @@ window.setupReading = () => {
 		},
 	});
 	control.update();
-	window.reading = { control, file, view, main, pane };
+	window.reading = {
+		control,
+		file,
+		view,
+		main,
+		pane,
+		setPaging(enabled, distance) {
+			view.dispatch({
+				effects: paging.reconfigure(
+					editorPageTurning({
+						editorPageTurning: enabled,
+						editorPageSwipeDistance: distance,
+					}),
+				),
+			});
+		},
+	};
 };

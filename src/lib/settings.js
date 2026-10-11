@@ -136,6 +136,8 @@ class Settings {
 			editorBackgroundColor: null,
 			editorForegroundColor: null,
 			editorParagraphSpacing: 0,
+			editorPageTurning: false,
+			editorPageSwipeDistance: 60,
 			editorPaddingLeft: null,
 			editorPaddingRight: null,
 			textWrap: false,

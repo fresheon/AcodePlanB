@@ -42,7 +42,7 @@ The updated browser regression uses the actual `header.tile` and compiled `www/b
 
 Entering editor fullscreen now hides Android status and navigation bars using WindowInsetsControllerCompat. Exiting restores their previous visibility and behavior; returning to the app re-applies immersive mode while reading. Android still permits temporary system bars through its system swipe gesture.
 
-A top-left clock and battery indicator use the editor's default foreground color. Battery and clock refresh every 15 seconds. Time, battery icon and percentage now use a fixed 12px size. The editor reserves a 12px status row followed by 30px of blank space before the scrollable text.
+A top-left clock and battery indicator use the editor's default foreground color. Battery and clock refresh every 15 seconds. Time, battery icon and percentage now use a fixed 12px size. The editor reserves a 5px top inset, a 12px status row and 30px of blank space before the scrollable text.
 
 The top-right exit hint becomes transparent after four seconds, while its 48px corner hit area remains active. Entering again resets the hint. Timers are cleared on exit.
 
@@ -52,4 +52,14 @@ Validation for this update: 735 tests passed, 1 skipped; TypeScript, Biome, Rspa
 
 Cordova 15 creates a separate native view tagged `statusBarView` and uses its visibility when calculating WebView margins. Reading fullscreen now hides that view as well as Android bars, applies the fullscreen window flag and requests a new inset calculation. Previous background visibility and fullscreen flag are restored on exit.
 
-The browser regression verifies a 12px status row at the top, exactly 30px between that row and the text viewport, and the text viewport bottom fitting the screen. Actual tablet behavior still requires device verification.
+The browser regression verifies a 12px status row 5px below the screen top, exactly 30px between that row and the text viewport, and the text viewport bottom fitting the screen. Actual tablet behavior still requires device verification.
+
+## Page turning and status top inset
+
+Settings → Editor settings now includes Page turning, immediately followed by Page swipe distance (px). Page turning defaults to off; the distance defaults to 60px and accepts finite nonnegative numbers. Changes persist and immediately reconfigure open editor panes, in ordinary and fullscreen layouts.
+
+With paging enabled, swipe right from the text viewport's left half for the previous page, or left from its right half for the next page. The horizontal distance must reach the configured threshold and exceed vertical movement. At 0px, tap the left/right half for previous/next page. Each page is one visible text viewport; positions clamp to document boundaries. Paging does not change file contents or selection. Disabling removes paging gesture handlers and restores normal interactions. Vertical scrolling remains available.
+
+The fullscreen clock and battery remain 12px, now 5px below the screen top; the blank gap to text remains 30px. The exit corner still hides after four seconds and remains clickable.
+
+Validation: 739 unit tests passed, 1 skipped; type checking, Biome, Rspack, Chromium touch swipes/tap paging/disable restoration and status spacing passed. Android APK build and signature verification passed. Physical tablet validation of this update is pending.

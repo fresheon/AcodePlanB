@@ -369,7 +369,10 @@ class TouchSelectionMenuController {
 		if (!this.#enabled) return;
 		if (this.#isIgnoredPointerTarget(event.target)) return;
 		this.#cancelReadOnlyTap();
-		if (this.#isReadOnly()) {
+		if (
+			this.#isReadOnly() ||
+			this.#view.dom.classList.contains("cm-page-turning")
+		) {
 			event.preventDefault();
 			event.stopPropagation();
 			this.#hideMenu(true);
@@ -395,7 +398,10 @@ class TouchSelectionMenuController {
 		}
 		if (target instanceof Node && this.#view.dom.contains(target)) {
 			this.#dismissedSelection = null;
-			if (this.#isReadOnly()) {
+			if (
+				this.#isReadOnly() ||
+				this.#view.dom.classList.contains("cm-page-turning")
+			) {
 				this.#pointerSelectionSession = null;
 				this.#readOnlyTapSession = null;
 				this.#hideMenu(true);
@@ -611,7 +617,12 @@ class TouchSelectionMenuController {
 	}
 
 	#shouldShowMenu() {
-		if (this.#isReadOnly() || this.#isScrolling || this.#isPointerInteracting)
+		if (
+			this.#view.dom.classList.contains("cm-page-turning") ||
+			this.#isReadOnly() ||
+			this.#isScrolling ||
+			this.#isPointerInteracting
+		)
 			return false;
 		if (!this.#view.hasFocus && !this.#isReadOnly()) return false;
 		if (

@@ -887,5 +887,9 @@
 	"settings-info-editor-wrapping-indent": "Choose whether wrapped text starts at the left edge, matches the original line's indentation, or is indented further. Each extra level uses your tab size.",
 	"icon pack": "Icon pack",
 	"settings-info-icon-pack": "Choose the icons used for files and folders in the explorer and file lists across the app.",
-	"unavailable": "unavailable"
+	"unavailable": "unavailable",
+	"editor-page-turning": "翻頁模式",
+	"editor-page-turning-info": "在正文左半螢幕向右滑動翻上一頁；在右半螢幕向左滑動翻下一頁。關閉後恢復原來的操作方式。",
+	"editor-page-swipe-distance": "翻頁滑動幅度",
+	"editor-page-swipe-distance-info": "水平滑動至少達到設定的 px 數值才翻頁。設為 0 時，點擊左半螢幕翻上一頁，點擊右半螢幕翻下一頁。"
 }

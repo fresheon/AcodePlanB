@@ -40,6 +40,7 @@ import {
 } from "cm/commandRegistry";
 import { editorAppearance, editorAppearanceKeys } from "cm/editorAppearance";
 import { editorFontTheme } from "cm/editorFontTheme";
+import { editorPageTurning, editorPageTurningKeys } from "cm/editorPageTurning";
 import {
 	blurEditorIfReadOnly,
 	createEditorReadOnlyExtension,
@@ -931,6 +932,7 @@ async function EditorManager($header, $body) {
 	const tabSizeCompartment = new Compartment();
 	const fontStyleCompartment = new Compartment();
 	const appearanceCompartment = new Compartment();
+	const pageTurningCompartment = new Compartment();
 	// Compartment for line wrapping
 	const wrapCompartment = new Compartment();
 	// Compartment for line numbers
@@ -1155,6 +1157,13 @@ async function EditorManager($header, $body) {
 	// Centralised CodeMirror options registry for organized configuration
 	// Each spec declares related settings keys, its compartment(s), and a builder returning extension(s)
 	const cmOptionSpecs = [
+		{
+			keys: editorPageTurningKeys,
+			compartments: [pageTurningCompartment],
+			build() {
+				return editorPageTurning(appSettings.value);
+			},
+		},
 		{
 			keys: editorAppearanceKeys,
 			compartments: [appearanceCompartment],
@@ -3591,6 +3600,10 @@ async function EditorManager($header, $body) {
 		updateMargin(true);
 		updateEditorLineNumbersFromSettings();
 	});
+
+	for (const key of editorPageTurningKeys) {
+		appSettings.on(`update:${key}`, () => applyOptions(editorPageTurningKeys));
+	}
 
 	for (const key of editorAppearanceKeys) {
 		appSettings.on(`update:${key}`, function () {

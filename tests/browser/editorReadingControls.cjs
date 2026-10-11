@@ -120,16 +120,31 @@ async function run() {
 		assert.deepEqual(rect, { x: 0, y: 0, width: 412, height: 732 });
 		assert.equal(await page.locator(".editor-pane-tabs").isVisible(), false);
 		assert.equal(await page.locator("#editor-fullscreen-status").count(), 1);
-		assert.equal(await page.locator("#editor-fullscreen-status").evaluate(el => getComputedStyle(el).fontSize), "12px");
-		const statusRect = await page.locator("#editor-fullscreen-status").boundingBox();
+		assert.equal(
+			await page
+				.locator("#editor-fullscreen-status")
+				.evaluate((el) => getComputedStyle(el).fontSize),
+			"12px",
+		);
+		const statusRect = await page
+			.locator("#editor-fullscreen-status")
+			.boundingBox();
 		const scrollerRect = await page.locator(".cm-scroller").boundingBox();
-		assert.equal(statusRect.y, 0);
+		assert.equal(statusRect.y, 5);
 		assert.equal(statusRect.height, 12);
 		assert.equal(scrollerRect.y - (statusRect.y + statusRect.height), 30);
 		assert.equal(scrollerRect.y + scrollerRect.height, 732);
 		await page.waitForTimeout(4000);
-		assert.equal(await page.locator("#editor-content-fullscreen-exit").evaluate(el => getComputedStyle(el).opacity), "0");
-		assert.equal(await page.evaluate(() => document.elementFromPoint(392, 20).id), "editor-content-fullscreen-exit");
+		assert.equal(
+			await page
+				.locator("#editor-content-fullscreen-exit")
+				.evaluate((el) => getComputedStyle(el).opacity),
+			"0",
+		);
+		assert.equal(
+			await page.evaluate(() => document.elementFromPoint(392, 20).id),
+			"editor-content-fullscreen-exit",
+		);
 		await page.touchscreen.tap(392, 20);
 		assert.equal(await page.locator(".editor-content-fullscreen").count(), 0);
 		assert.equal(
@@ -161,8 +176,76 @@ async function run() {
 		);
 		await page.locator("#editor-read-only-toggle").tap();
 		assert.equal(await page.evaluate(() => reading.view.state.readOnly), true);
+		await page.locator("#editor-content-fullscreen-toggle").tap();
+		await page.evaluate(() => {
+			reading.setPaging(true, 60);
+			reading.view.scrollDOM.scrollTop = 0;
+		});
+		const client = await page.context().newCDPSession(page);
+		async function swipe(x, dx, dy = 0) {
+			await client.send("Input.dispatchTouchEvent", {
+				type: "touchStart",
+				touchPoints: [{ x, y: 200 }],
+			});
+			for (let n = 1; n <= 8; n++) {
+				await client.send("Input.dispatchTouchEvent", {
+					type: "touchMove",
+					touchPoints: [{ x: x + (dx * n) / 8, y: 200 + (dy * n) / 8 }],
+				});
+			}
+			await client.send("Input.dispatchTouchEvent", {
+				type: "touchEnd",
+				touchPoints: [],
+			});
+		}
+		const pageHeight = await page.evaluate(
+			() => reading.view.scrollDOM.clientHeight,
+		);
+		await swipe(360, -100);
+		assert.equal(
+			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
+			pageHeight,
+		);
+		await swipe(50, 100);
+		assert.equal(
+			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
+			0,
+		);
+		await swipe(360, -40);
+		assert.equal(
+			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
+			0,
+		);
+		await swipe(50, -40);
+		assert.equal(
+			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
+			0,
+		);
+		await page.evaluate(() => reading.setPaging(true, 0));
+		await page.touchscreen.tap(360, 200);
+		assert.equal(
+			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
+			pageHeight,
+		);
+		await page.touchscreen.tap(50, 200);
+		assert.equal(
+			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
+			0,
+		);
+		await page.evaluate(() => reading.setPaging(false, 0));
+		await page.touchscreen.tap(360, 200);
+		assert.equal(
+			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
+			0,
+		);
+		assert.equal(await page.locator(".cm-page-turning").count(), 0);
+		await page.locator(".cm-scroller").hover();
+		await page.mouse.wheel(0, 250);
+		await page.waitForTimeout(150);
+		assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > 0);
+		await page.touchscreen.tap(392, 20);
 		console.log(
-			"Browser regression passed: real toolbar hit testing, both touch buttons, fullscreen exit, read-only selection guard, scrolling and editable text input.",
+			"Browser regression passed: real toolbar hit testing, both touch buttons, fullscreen exit, read-only selection guard, scrolling, editable text input, paging swipes, tap paging and paging disable.",
 		);
 	} finally {
 		await browser?.close();

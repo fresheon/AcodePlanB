@@ -100,11 +100,12 @@ window.setupReading = () => {
 				]),
 			});
 		},
-		setPaging(enabled, distance) {
+		setPaging(enabled, distance, lockVertical = false) {
 			view.dispatch({
 				effects: paging.reconfigure(
 					editorPageTurning({
 						editorPageTurning: enabled,
+						editorPageLockVerticalScroll: lockVertical,
 						editorPageSwipeDistance: distance,
 					}),
 				),

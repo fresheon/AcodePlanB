@@ -71,7 +71,8 @@ describe("editor appearance persistence", () => {
 		const second = await disk.launch();
 		expect(second).not.toBe(first);
 		expect(second.value).toMatchObject(overrides);
-		await second.update({ editorTheme: "light", editorPageTurning: true });
+		await second.update({ editorTheme: "light", editorPageTurning: true, editorPageLockVerticalScroll: true });
+		expect((await disk.launch()).value.editorPageLockVerticalScroll).toBe(true);
 		expect((await disk.launch()).value).toMatchObject(overrides);
 	});
 	it("preserves numeric paragraph spacing across launches and permits disabling it", async () => {

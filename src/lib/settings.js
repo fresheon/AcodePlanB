@@ -172,6 +172,7 @@ class Settings {
 			editorPaddingBottom: 0,
 			editorParagraphSpacing: 0,
 			editorPageTurning: false,
+			editorPageLockVerticalScroll: false,
 			editorPageSwipeDistance: 60,
 			editorPaddingLeft: null,
 			editorPaddingRight: null,

@@ -39,7 +39,7 @@ describe("editor appearance settings", () => {
 	it("groups page controls above scroll settings and validates cursor width", () => {
 		const page = editorSettings();
 		const index = page.items.findIndex(item => item.key === "scroll-settings");
-		expect(page.items.slice(index - 2, index).map(item => item.key)).toEqual(["editorPageTurning", "editorPageSwipeDistance"]);
+		expect(page.items.slice(index - 3, index).map(item => item.key)).toEqual(["editorPageTurning", "editorPageSwipeDistance", "editorPageLockVerticalScroll"]);
 		expect(page.items[index - 2].category).toBe(page.items[index].category);
 		page.callback("cursorWidth", "3.5");
 		expect(mocks.value.cursorWidth).toBe(3.5);

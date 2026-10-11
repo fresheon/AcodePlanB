@@ -134,6 +134,16 @@ export default function editorSettings() {
 			category: categories.scrolling,
 		},
 		{
+			key: "editorPageLockVerticalScroll",
+			text: appearanceLabel(
+				"editor-page-lock-vertical",
+				"Disable vertical scrolling during horizontal paging",
+			),
+			checkbox: values.editorPageLockVerticalScroll,
+			category: categories.scrolling,
+		},
+
+		{
 			key: "scroll-settings",
 			text: strings["scroll settings"],
 			info: strings["settings-info-editor-scroll-settings"],

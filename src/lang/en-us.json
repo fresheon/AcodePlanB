@@ -910,5 +910,6 @@
 	"editor-cursor-width": "Cursor width",
 	"editor-appearance-top": "Top text padding",
 	"editor-appearance-bottom": "Bottom text padding",
-	"editor-active-line-color": "Clicked paragraph highlight color"
+	"editor-active-line-color": "Clicked paragraph highlight color",
+	"editor-page-lock-vertical": "Disable vertical scrolling during horizontal paging"
 }

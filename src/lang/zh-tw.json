@@ -898,5 +898,6 @@
 	"editor-cursor-width": "游標粗細",
 	"editor-appearance-top": "上方留白",
 	"editor-appearance-bottom": "下方留白",
-	"editor-active-line-color": "單擊段落時高亮色"
+	"editor-active-line-color": "單擊段落時高亮色",
+	"editor-page-lock-vertical": "左右翻頁時禁止上下捲動"
 }

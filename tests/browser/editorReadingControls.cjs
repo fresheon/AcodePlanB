@@ -300,6 +300,34 @@ async function run() {
 			});
 		}
 		await page.waitForTimeout(150);
+		await page.evaluate(() => { reading.setPaging(true, 60, true); reading.view.scrollDOM.scrollTop = 400; });
+		await page.waitForTimeout(150);
+		const lockedTop = await page.evaluate(() => reading.view.scrollDOM.scrollTop);
+		await swipe(200, 0, -140);
+		await page.locator(".cm-scroller").hover();
+		await page.mouse.wheel(0, 200);
+		await page.waitForTimeout(200);
+		assert.equal(await page.evaluate(() => reading.view.scrollDOM.scrollTop), lockedTop, "fullscreen lock must block vertical touch and wheel scrolling");
+		await swipe(360, -100);
+		await page.waitForTimeout(150);
+		assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > lockedTop, "horizontal paging must work while locked");
+		await page.touchscreen.tap(392, 20);
+		await page.waitForTimeout(150);
+		const outsideTop = await page.evaluate(() => reading.view.scrollDOM.scrollTop);
+		await page.locator(".cm-scroller").hover();
+		await page.mouse.wheel(0, 150);
+		await page.waitForTimeout(150);
+		assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > outsideTop, "exit must restore vertical scrolling even with preference enabled");
+		await page.locator("#editor-content-fullscreen-toggle").tap();
+		await page.evaluate(() => reading.setPaging(true, 60, false));
+		await page.waitForTimeout(150);
+		const unlockedTop = await page.evaluate(() => reading.view.scrollDOM.scrollTop);
+		await page.locator(".cm-scroller").hover();
+		await page.mouse.wheel(0, 150);
+		await page.waitForTimeout(150);
+		assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > unlockedTop, "turning off lock must restore fullscreen scrolling");
+		await page.evaluate(() => { reading.view.scrollDOM.scrollTop = 0; });
+		await page.waitForTimeout(150);
 		const nextPageTop = await page.evaluate(() => {
 			const root = reading.view.scrollDOM;
 			const box = root.getBoundingClientRect();

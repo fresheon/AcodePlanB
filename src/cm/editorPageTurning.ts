@@ -3,6 +3,7 @@ import { EditorView, ViewPlugin } from "@codemirror/view";
 export const editorPageTurningKeys = [
 	"editorPageTurning",
 	"editorPageSwipeDistance",
+	"editorPageLockVerticalScroll",
 ];
 
 export function isValidPageSwipeDistance(value: unknown): boolean {
@@ -77,6 +78,7 @@ interface Gesture {
 export function editorPageTurning(values: {
 	editorPageTurning?: boolean;
 	editorPageSwipeDistance?: unknown;
+	editorPageLockVerticalScroll?: boolean;
 }) {
 	if (!values.editorPageTurning) return [];
 	const distance = isValidPageSwipeDistance(values.editorPageSwipeDistance)
@@ -84,10 +86,11 @@ export function editorPageTurning(values: {
 		: 60;
 	return [
 		EditorView.editorAttributes.of((view) =>
-			view.state.readOnly ? { class: "cm-page-turning" } : null,
+			view.state.readOnly ? { class: `cm-page-turning${values.editorPageLockVerticalScroll ? " cm-page-lock-vertical" : ""}` } : null,
 		),
 		EditorView.theme({
 			"&.cm-page-turning .cm-scroller": { touchAction: "pan-y" },
+			".editor-content-fullscreen &.cm-page-lock-vertical .cm-scroller": { touchAction: "none", overflowY: "hidden" },
 			"&.cm-page-turning .cm-content": {
 				paddingBottom: "calc(var(--editor-content-bottom, 0px) + var(--cm-page-tail, 0px))",
 				userSelect: "none",
@@ -223,6 +226,11 @@ export function editorPageTurning(values: {
 				event.preventDefault();
 				suppress(event);
 			};
+			const blockVerticalScroll = (event: Event) => {
+				if (values.editorPageLockVerticalScroll && view.state.readOnly && view.dom.closest(".editor-content-fullscreen")) event.preventDefault();
+			};
+			root.addEventListener("touchmove", blockVerticalScroll, { passive: false });
+			root.addEventListener("wheel", blockVerticalScroll, { passive: false });
 			root.addEventListener("scroll", schedule, { passive: true });
 			root.addEventListener("pointerdown", down, true);
 			root.addEventListener("pointerup", up, true);
@@ -256,6 +264,8 @@ export function editorPageTurning(values: {
 					destroyed = true;
 					restore();
 					root.removeEventListener("scroll", schedule);
+					root.removeEventListener("touchmove", blockVerticalScroll);
+					root.removeEventListener("wheel", blockVerticalScroll);
 					root.removeEventListener("pointerdown", down, true);
 					root.removeEventListener("pointerup", up, true);
 					root.removeEventListener("pointercancel", cancel, true);

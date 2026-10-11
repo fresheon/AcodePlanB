@@ -328,6 +328,12 @@ body.resizing-editor-pane {
   &:disabled { opacity: 0.4; }
 }
 
+// Header tiles disable pointer events on children unless they carry an action.
+// These buttons have their own click handlers, so explicitly enable hit testing.
+header.tile > .editor-reading-button:not(:disabled) {
+  pointer-events: auto;
+}
+
 .editor-pane.editor-content-fullscreen {
   position: fixed;
   inset: 0;

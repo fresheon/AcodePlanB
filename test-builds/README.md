@@ -31,3 +31,9 @@ printf 'false\n' > /tmp/fdroid.bool
 ```
 
 Toolchain used: Node 24, JDK 21, Android API 36, Build Tools 36.0.0, Gradle 8.14.2. Output: `platforms/android/app/build/outputs/apk/debug/app-debug.apk`.
+
+## Toolbar click fix
+
+The original header uses `header.tile`, whose child elements default to `pointer-events: none`. Reading buttons now explicitly opt into pointer hit testing. This fixes both visible-but-unresponsive toolbar icons.
+
+The updated browser regression uses the actual `header.tile` and compiled `www/build/main.css`, checks `elementFromPoint` hit testing, taps both buttons, exits fullscreen through the top-right corner, verifies read-only scrolling/no cursor and types text after returning to editing. The regression is saved at `tests/browser/editorReadingControls.cjs` (requires Playwright and Chromium; run after the Rspack build). The 16 relevant unit tests and Biome check passed; the rebuilt APK passed signature verification. Android device validation remains pending.

@@ -342,6 +342,17 @@ export default function editorSettings() {
 			category: categories.guidesIndicators,
 		},
 		{
+			key: "editorActiveLineColor",
+			text: appearanceLabel(
+				"editor-active-line-color",
+				"Clicked paragraph highlight color",
+			),
+			value: values.editorActiveLineColor || theme.activeLine || "#80808033",
+			color: true,
+			category: categories.cursorSelection,
+		},
+
+		{
 			key: "editorSelectionColor",
 			text: appearanceLabel(
 				"editor-selection-color",
@@ -432,6 +443,7 @@ export default function editorSettings() {
 				editorBackgroundColor: null,
 				editorForegroundColor: null,
 				editorSelectionColor: null,
+				editorActiveLineColor: null,
 				editorCursorColor: null,
 				cursorWidth: 2,
 				editorPaddingTop: 30,

@@ -11,6 +11,7 @@ export const editorAppearanceKeys = [
   "editorBackgroundColor",
   "editorForegroundColor",
   "editorSelectionColor",
+  "editorActiveLineColor",
   "editorCursorColor",
   "editorPaddingTop",
   "editorPaddingBottom",
@@ -122,6 +123,10 @@ export function editorAppearance(values: AppearanceSettings) {
   };
   const selection = color(values.editorSelectionColor);
   const cursor = color(values.editorCursorColor);
+  const activeLine = color(values.editorActiveLineColor);
+  if (activeLine) {
+    theme["&:not(.cm-read-only) .cm-activeLine"] = { backgroundColor: activeLine };
+  }
   if (selection) {
     theme[
       "&:not(.cm-read-only).cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, &:not(.cm-read-only) .cm-selectionBackground, &:not(.cm-read-only) .cm-content::selection, &:not(.cm-read-only) .cm-content ::selection"

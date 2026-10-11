@@ -909,5 +909,6 @@
 	"editor-cursor-color": "Cursor settings",
 	"editor-cursor-width": "Cursor width",
 	"editor-appearance-top": "Top text padding",
-	"editor-appearance-bottom": "Bottom text padding"
+	"editor-appearance-bottom": "Bottom text padding",
+	"editor-active-line-color": "Clicked paragraph highlight color"
 }

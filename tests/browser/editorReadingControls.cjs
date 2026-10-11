@@ -64,7 +64,7 @@ async function run() {
 
 		await page.locator("#editor-read-only-toggle").tap();
 		await page.evaluate(() => {
-			reading.setAppearance({ editorSelectionColor: "#ffee00", editorCursorColor: "#ff0000", cursorWidth: 4, editorPaddingTop: 22, editorPaddingBottom: 18 });
+			reading.setAppearance({ editorActiveLineColor: "#22bb66", editorSelectionColor: "#ffee00", editorCursorColor: "#ff0000", cursorWidth: 4, editorPaddingTop: 22, editorPaddingBottom: 18 });
 			reading.view.focus();
 			reading.view.dispatch({ selection: { anchor: 2, head: 8 } });
 		});
@@ -73,11 +73,19 @@ async function run() {
 		assert.equal(await page.locator(".cm-line").first().evaluate(el => getComputedStyle(el, "::selection").backgroundColor), "rgb(255, 238, 0)");
 		await page.evaluate(() => reading.view.dispatch({ selection: { anchor: 2 } }));
 		await page.waitForTimeout(150);
+		const clicked = await page.evaluate(() => {
+			const rect = reading.view.coordsAtPos(8);
+			return { x: rect.left, y: (rect.top + rect.bottom) / 2 };
+		});
+		await page.touchscreen.tap(clicked.x, clicked.y);
+		await page.waitForTimeout(150);
+		assert.equal(await page.locator(".cm-activeLine").first().evaluate(el => getComputedStyle(el).backgroundColor), "rgb(34, 187, 102)");
 		const cursorStyle = await page.locator(".cm-cursor").first().evaluate(el => ({ color: getComputedStyle(el).borderLeftColor, width: getComputedStyle(el).borderLeftWidth }));
 		assert.equal(cursorStyle.color, "rgb(255, 0, 0)");
 		assert.equal(cursorStyle.width, "4px");
 		await page.locator("#editor-content-fullscreen-toggle").tap();
 		await page.waitForTimeout(150);
+		assert.equal(await page.locator(".cm-activeLine").first().evaluate(el => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0)");
 		const margins = await page.evaluate(() => {
 			const status = document.getElementById("editor-fullscreen-status");
 			const bar = status.getBoundingClientRect();

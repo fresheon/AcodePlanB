@@ -29,7 +29,7 @@ beforeEach(() => {
 describe("editor appearance settings", () => {
 	it("exposes color pickers, spacing inputs, and line heights greater than two", () => {
 		const page = editorSettings();
-		for (const key of ["editorBackgroundColor", "editorForegroundColor", "editorSelectionColor", "editorCursorColor"]) expect(page.items.find(item => item.key === key).color).toBe(true);
+		for (const key of ["editorBackgroundColor", "editorForegroundColor", "editorSelectionColor", "editorCursorColor", "editorActiveLineColor"]) expect(page.items.find(item => item.key === key).color).toBe(true);
 		expect(page.items.find(item => item.key === "lineHeight").promptOptions.test("3.5")).toBe(true);
 		page.callback("editorPaddingLeft", "12.5");
 		expect(mocks.update).toHaveBeenCalledWith({ editorPaddingLeft: 12.5 });

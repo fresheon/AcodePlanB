@@ -56,6 +56,7 @@ const overrides = {
 	editorPaddingLeft: 12.5,
 	editorPaddingRight: 24,
 	editorSelectionColor: "#ffee00",
+	editorActiveLineColor: "#22bb66",
 	editorCursorColor: "#ff0000",
 	cursorWidth: 3.5,
 	editorPaddingTop: 22,

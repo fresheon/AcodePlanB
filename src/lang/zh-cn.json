@@ -909,5 +909,6 @@
 	"editor-cursor-color": "光标设置",
 	"editor-cursor-width": "光标粗细",
 	"editor-appearance-top": "上方留白",
-	"editor-appearance-bottom": "下方留白"
+	"editor-appearance-bottom": "下方留白",
+	"editor-active-line-color": "单击段落时高亮色"
 }

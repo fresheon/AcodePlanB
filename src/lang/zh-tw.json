@@ -897,5 +897,6 @@
 	"editor-cursor-color": "游標設定",
 	"editor-cursor-width": "游標粗細",
 	"editor-appearance-top": "上方留白",
-	"editor-appearance-bottom": "下方留白"
+	"editor-appearance-bottom": "下方留白",
+	"editor-active-line-color": "單擊段落時高亮色"
 }

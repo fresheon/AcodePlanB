@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { Compartment } from "@codemirror/state";
+import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import {
 	editorPageTurning,
@@ -14,10 +14,12 @@ afterEach(() => {
 });
 function setup(distance = 60) {
 	const compartment = new Compartment();
+	const readOnly = new Compartment();
 	const view = new EditorView({
 		doc: "unchanged text",
 		parent: document.body,
 		extensions: [
+			readOnly.of(EditorState.readOnly.of(true)),
 			compartment.of(
 				editorPageTurning({
 					editorPageTurning: true,
@@ -58,9 +60,33 @@ function setup(distance = 60) {
 			}),
 		);
 	}
-	return { view, root, gesture, compartment };
+	return { view, root, gesture, compartment, readOnly };
 }
 describe("editor page turning", () => {
+	it("suspends taps, swipes and input blockers during editing without disabling the preference", () => {
+		const { view, root, gesture, readOnly } = setup(0);
+		gesture(600);
+		expect(root.scrollTop).toBe(400);
+		view.dispatch({
+			effects: readOnly.reconfigure(EditorState.readOnly.of(false)),
+		});
+		expect(view.dom.classList.contains("cm-page-turning")).toBe(false);
+		gesture(600);
+		gesture(600, -100);
+		expect(root.scrollTop).toBe(400);
+		const down = new MouseEvent("mousedown", {
+			bubbles: true,
+			cancelable: true,
+		});
+		root.dispatchEvent(down);
+		expect(down.defaultPrevented).toBe(false);
+		view.dispatch({
+			effects: readOnly.reconfigure(EditorState.readOnly.of(true)),
+		});
+		expect(view.dom.classList.contains("cm-page-turning")).toBe(true);
+		gesture(600);
+		expect(root.scrollTop).toBe(800);
+	});
 	it("accepts nonnegative px distances including zero and rejects empty, negative or nonfinite input", () => {
 		for (const value of [0, "0", 60, "12.5", 2000])
 			expect(isValidPageSwipeDistance(value)).toBe(true);

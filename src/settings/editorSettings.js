@@ -51,7 +51,7 @@ export default function editorSettings() {
 			checkbox: values.editorPageTurning,
 			info: appearanceLabel(
 				"editor-page-turning-info",
-				"Swipe right on the left half for the previous page; swipe left on the right half for the next page.",
+				"Only active in read-only mode. Swipe right on the left half for the previous page; swipe left on the right half for the next page. Editing keeps normal taps and vertical scrolling.",
 			),
 			category: categories.scrolling,
 		},

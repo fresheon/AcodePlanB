@@ -902,7 +902,7 @@
 	"editor-reading-fullscreen": "Fullscreen text",
 	"editor-reading-exit": "Exit fullscreen",
 	"editor-page-turning": "Page turning",
-	"editor-page-turning-info": "Swipe right on the left half for the previous page; swipe left on the right half for the next page.",
+	"editor-page-turning-info": "Only active in read-only mode. Swipe right on the left half for the previous page; swipe left on the right half for the next page. Editing keeps normal taps and vertical scrolling.",
 	"editor-page-swipe-distance": "Page swipe distance",
 	"editor-page-swipe-distance-info": "Minimum horizontal swipe distance in px. Set 0 to tap the left/right half for previous/next page."
 }

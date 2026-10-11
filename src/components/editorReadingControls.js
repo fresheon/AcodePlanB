@@ -83,6 +83,7 @@ export default function editorReadingControls({
 		fullscreenButton.setAttribute("aria-pressed", "false");
 		pane.editor?.requestMeasure();
 		document.removeEventListener("keydown", onKeyDown, true);
+		update();
 	}
 	function onKeyDown(event) {
 		if (event.key !== "Escape") return;
@@ -96,6 +97,7 @@ export default function editorReadingControls({
 		if (file?.type !== "editor" || file.loading) return;
 		const pane = manager.getFilePane(file);
 		if (!pane?.element?.parentNode) return;
+		if (file.editable) exec("read-only");
 		fullscreenFile = file;
 		fullscreenPane = pane;
 		placeholder = document.createComment("fullscreen editor pane");
@@ -112,10 +114,12 @@ export default function editorReadingControls({
 		fullscreenButton.setAttribute("aria-pressed", "true");
 		pane.editor?.requestMeasure();
 		document.addEventListener("keydown", onKeyDown, true);
+		update();
 	}
 	function update() {
 		const file = manager.activeFile;
 		if (fullscreenPane && file !== fullscreenFile) exit();
+		if (fullscreenPane && file?.editable) file.editable = false;
 		if (file?.type !== "editor" || !pencil.isConnected) {
 			readOnlyButton.remove();
 			fullscreenButton.remove();
@@ -128,12 +132,17 @@ export default function editorReadingControls({
 		const label = readOnly ? labels.edit : labels.readOnly;
 		readOnlyButton.title = label;
 		readOnlyButton.setAttribute("aria-label", label);
-		readOnlyButton.disabled = !!file.loading || !file.loaded;
+		readOnlyButton.disabled =
+			!!fullscreenPane || !!file.loading || !file.loaded;
 		header.insertBefore(readOnlyButton, pencil.nextSibling);
 		header.insertBefore(fullscreenButton, readOnlyButton.nextSibling);
 	}
 	readOnlyButton.onclick = () => {
-		if (manager.activeFile?.type !== "editor" || readOnlyButton.disabled)
+		if (
+			fullscreenPane ||
+			manager.activeFile?.type !== "editor" ||
+			readOnlyButton.disabled
+		)
 			return;
 		exec("read-only");
 		update();

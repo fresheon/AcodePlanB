@@ -28,15 +28,21 @@ export function editorPageTurning(values: {
 		? Number(values.editorPageSwipeDistance)
 		: 60;
 	return [
-		EditorView.editorAttributes.of({ class: "cm-page-turning" }),
+		EditorView.editorAttributes.of((view) =>
+			view.state.readOnly ? { class: "cm-page-turning" } : null,
+		),
 		EditorView.theme({
-			".cm-scroller": { touchAction: "pan-y" },
-			".cm-content": { userSelect: "none", WebkitUserSelect: "none" },
+			"&.cm-page-turning .cm-scroller": { touchAction: "pan-y" },
+			"&.cm-page-turning .cm-content": {
+				userSelect: "none",
+				WebkitUserSelect: "none",
+			},
 		}),
 		ViewPlugin.define((view) => {
 			const root = view.scrollDOM;
 			let gesture: Gesture | null = null;
 			const down = (event: PointerEvent) => {
+				if (!view.state.readOnly) return;
 				if (event.isPrimary === false || event.button !== 0) return;
 				const rect = root.getBoundingClientRect();
 				gesture = {
@@ -48,7 +54,8 @@ export function editorPageTurning(values: {
 				event.stopImmediatePropagation();
 			};
 			const up = (event: PointerEvent) => {
-				if (!gesture || event.pointerId !== gesture.id) return;
+				if (!view.state.readOnly || !gesture || event.pointerId !== gesture.id)
+					return;
 				const start = gesture;
 				gesture = null;
 				const dx = event.clientX - start.x;
@@ -76,9 +83,10 @@ export function editorPageTurning(values: {
 				gesture = null;
 			};
 			const suppress = (event: Event) => {
-				event.stopImmediatePropagation();
+				if (view.state.readOnly) event.stopImmediatePropagation();
 			};
 			const click = (event: Event) => {
+				if (!view.state.readOnly) return;
 				event.preventDefault();
 				suppress(event);
 			};
@@ -93,6 +101,10 @@ export function editorPageTurning(values: {
 			root.addEventListener("click", click, true);
 			root.addEventListener("contextmenu", click, true);
 			return {
+				update(update) {
+					if (update.startState.readOnly !== update.state.readOnly)
+						gesture = null;
+				},
 				destroy() {
 					root.removeEventListener("pointerdown", down, true);
 					root.removeEventListener("pointerup", up, true);

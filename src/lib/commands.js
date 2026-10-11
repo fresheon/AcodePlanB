@@ -464,6 +464,8 @@ export default {
 		editorManager.openPreviousEditorFromHistory?.();
 	},
 	"read-only"() {
+		if (document.body.classList.contains("editor-content-fullscreen-mode"))
+			return;
 		const file = editorManager.activeFile;
 		file.editable = !file.editable;
 	},

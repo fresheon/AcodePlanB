@@ -9,7 +9,7 @@ The header now has two buttons beside the pencil:
 - An eye in read-only mode, or a crossed-out eye in editing mode. Click it to invoke the existing read-only command. The original menu entry remains synchronized.
 - A fullscreen icon that shows only the active editor pane. Click the top-right corner once (or press Escape) to restore the original pane layout. Switching to another file or closing the fullscreen file also exits.
 
-Read-only text cannot be selected by tap, double click or long press and has no visible cursor or active-line highlight. Scrolling is retained. Switching back to editing restores ordinary selection and input. The fullscreen toggle does not change file editability or the global fullscreen preference.
+Read-only text cannot be selected by tap, double click or long press and has no visible cursor or active-line highlight. Scrolling is retained. Switching back to editing restores ordinary selection and input. Entering fullscreen switches the active file to read-only. Exiting keeps it read-only until the eye button is clicked outside fullscreen. The global fullscreen preference is unchanged.
 
 Under Settings → Editor settings, test:
 
@@ -58,8 +58,16 @@ The browser regression verifies a 12px status row 5px below the screen top, exac
 
 Settings → Editor settings now includes Page turning, immediately followed by Page swipe distance (px). Page turning defaults to off; the distance defaults to 60px and accepts finite nonnegative numbers. Changes persist and immediately reconfigure open editor panes, in ordinary and fullscreen layouts.
 
-With paging enabled, swipe right from the text viewport's left half for the previous page, or left from its right half for the next page. The horizontal distance must reach the configured threshold and exceed vertical movement. At 0px, tap the left/right half for previous/next page. Each page is one visible text viewport; positions clamp to document boundaries. Paging does not change file contents or selection. Disabling removes paging gesture handlers and restores normal interactions. Vertical scrolling remains available.
+With paging enabled and the editor read-only, swipe right from the text viewport's left half for the previous page, or left from its right half for the next page. The horizontal distance must reach the configured threshold and exceed vertical movement. At 0px, tap the left/right half for previous/next page. Each page is one visible text viewport; positions clamp to document boundaries. Paging does not change file contents or selection. Disabling removes paging gesture handlers and restores normal interactions. Vertical scrolling remains available.
 
 The fullscreen clock and battery remain 12px, now 5px below the screen top; the blank gap to text remains 30px. The exit corner still hides after four seconds and remains clickable.
 
 Validation: 739 unit tests passed, 1 skipped; type checking, Biome, Rspack, Chromium touch swipes/tap paging/disable restoration and status spacing passed. Android APK build and signature verification passed. Physical tablet validation of this update is pending.
+
+## Editing and fullscreen read-only fix
+
+The previous paging extension captured mouse/pointer clicks and disabled text selection even when the file was editable, preventing caret placement and keyboard activation. Paging event interception and styles now only apply while CodeMirror is read-only, and respond immediately to read-only changes. Editing retains normal cursor placement, input and vertical scrolling even with the paging preference enabled.
+
+Entering editor fullscreen switches to read-only. The eye control is disabled in fullscreen and the shared read-only command also refuses fullscreen toggles. Exiting stays read-only; click the eye outside fullscreen to edit. An external read-only update that tries to enable editing in fullscreen is reset to read-only.
+
+Validation: 741 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Chromium focus/text input with tap paging enabled, swipe suspension during editing, paging in read-only mode, fullscreen read-only and exit state passed. Android APK build and signature verification passed. Physical tablet IME activation still requires device testing.

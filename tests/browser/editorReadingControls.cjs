@@ -154,10 +154,12 @@ async function run() {
 			true,
 		);
 
+		await page.evaluate(() => reading.setPaging(true, 0));
 		await page.locator("#editor-read-only-toggle").tap();
 		await page.waitForTimeout(150);
 		assert.equal(await page.evaluate(() => reading.file.editable), true);
 		assert.equal(await page.evaluate(() => reading.view.state.readOnly), false);
+		assert.equal(await page.locator(".cm-page-turning").count(), 0);
 		await page.evaluate(() => {
 			reading.view.scrollDOM.scrollTop = 0;
 		});
@@ -167,6 +169,7 @@ async function run() {
 			return { x: rect.left, y: (rect.top + rect.bottom) / 2 };
 		});
 		await page.touchscreen.tap(point.x, point.y);
+		assert.equal(await page.evaluate(() => reading.view.hasFocus), true);
 		await page.keyboard.type("__editable__");
 		assert.equal(
 			await page.evaluate(() =>
@@ -174,8 +177,17 @@ async function run() {
 			),
 			true,
 		);
-		await page.locator("#editor-read-only-toggle").tap();
+		await page.locator("#editor-content-fullscreen-toggle").tap();
+		assert.equal(await page.evaluate(() => reading.file.editable), false);
 		assert.equal(await page.evaluate(() => reading.view.state.readOnly), true);
+		assert.equal(
+			await page.locator(".cm-content").getAttribute("contenteditable"),
+			"false",
+		);
+		await page.evaluate(() => reading.control.readOnlyButton.click());
+		assert.equal(await page.evaluate(() => reading.view.state.readOnly), true);
+		await page.touchscreen.tap(392, 20);
+		assert.equal(await page.evaluate(() => reading.file.editable), false);
 		await page.locator("#editor-content-fullscreen-toggle").tap();
 		await page.evaluate(() => {
 			reading.setPaging(true, 60);
@@ -244,6 +256,21 @@ async function run() {
 		await page.waitForTimeout(150);
 		assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > 0);
 		await page.touchscreen.tap(392, 20);
+		await page.locator("#editor-read-only-toggle").tap();
+		await page.evaluate(() => {
+			reading.setPaging(true, 60);
+			reading.view.scrollDOM.scrollTop = 0;
+		});
+		await swipe(360, -100);
+		assert.equal(
+			await page.evaluate(() => reading.view.scrollDOM.scrollTop),
+			0,
+		);
+		assert.equal(await page.locator(".cm-page-turning").count(), 0);
+		await page.locator(".cm-scroller").hover();
+		await page.mouse.wheel(0, 250);
+		await page.waitForTimeout(150);
+		assert((await page.evaluate(() => reading.view.scrollDOM.scrollTop)) > 0);
 		console.log(
 			"Browser regression passed: real toolbar hit testing, both touch buttons, fullscreen exit, read-only selection guard, scrolling, editable text input, paging swipes, tap paging and paging disable.",
 		);

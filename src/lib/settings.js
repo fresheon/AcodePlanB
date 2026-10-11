@@ -21,6 +21,31 @@ import { isDeviceDarkTheme } from "./systemConfiguration";
  * @property {boolean} regExp
  */
 
+// null means follow the theme/default. Saved overrides have a different type.
+const nullableEditorSettingValidators = {
+	editorBackgroundColor: isNullableEditorColor,
+	editorForegroundColor: isNullableEditorColor,
+	editorPaddingLeft: isNullableEditorPadding,
+	editorPaddingRight: isNullableEditorPadding,
+};
+
+function isNullableEditorColor(value) {
+	return (
+		value === null ||
+		(typeof value === "string" && CSS.supports("color", value))
+	);
+}
+
+function isNullableEditorPadding(value) {
+	return (
+		value === null ||
+		(typeof value === "number" &&
+			Number.isFinite(value) &&
+			value >= 0 &&
+			value <= 80)
+	);
+}
+
 class Settings {
 	#customTheme = new ThemeBuilder("Custom").toJSON();
 	#defaultSettings;
@@ -257,10 +282,12 @@ class Settings {
 			// make sure that all the settings are present
 			Object.keys(this.#defaultSettings).forEach((setting) => {
 				const value = settings[setting];
-				if (
-					value === undefined ||
-					typeof value !== typeof this.#defaultSettings[setting]
-				) {
+				const validateNullable = nullableEditorSettingValidators[setting];
+				const valid = validateNullable
+					? validateNullable(value)
+					: value !== undefined &&
+						typeof value === typeof this.#defaultSettings[setting];
+				if (!valid) {
 					settings[setting] = this.#defaultSettings[setting];
 				}
 			});

@@ -79,3 +79,11 @@ The existing file-tools action now uses a diagonal hammer. The editing-mode indi
 Paging now measures actual visual rows with DOM Range rectangles, including wrapped rows and paragraph spacing. A row that does not fully fit at the bottom is clipped out of the current page and becomes the start of the next page. Previous-page navigation restores earlier page boundaries. Temporary bottom scroll space allows the final page to start at a complete row without clipping its top; next-page navigation stops when the final document row fits. Spacing/clipping are removed when paging is disabled or editing resumes. Oversized single rows taller than the entire viewport retain scrolling rather than blanking the viewport.
 
 Validation: 742 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Chromium touch tests passed, including 17px text at 1.73 line height, wrapped/unwrapped paragraphs with 13px paragraph spacing, no clipped glyphs at either page edge, document-end behavior, icon rendering and restored editing. Android APK build and signature verification passed. Physical tablet validation remains pending.
+
+## Editor color and padding persistence fix
+
+The four appearance override fields have `null` defaults, but saved colors are strings and saved padding values are numbers. The generic settings loader previously compared their types with `typeof null` and reset all four overrides on every launch. The loader now validates those nullable fields explicitly: a supported CSS color or null for colors, a finite number from 0 to 80 or null for padding. Other settings keep their original type checks.
+
+Regression tests instantiate the actual settings singleton repeatedly using the saved JSON, checking save/relaunch, a theme or unrelated preference change followed by another launch, explicit 0px/80px padding, default reset, and missing/invalid fields. Cordova file I/O is simulated in these tests; physical-device restart validation remains pending.
+
+Validation: 745 unit tests passed, 1 skipped; TypeScript, Biome, Rspack, Android APK build and signature verification passed. If an older build already overwrote appearance values with defaults, enter the desired values again after installing this build.

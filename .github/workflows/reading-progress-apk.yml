@@ -1,7 +1,7 @@
 name: Reading progress test APK
 on:
   push:
-    branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions, feat/document-bookmarks, fix/bookmark-scroll-layout]
+    branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions, feat/document-bookmarks, fix/bookmark-scroll-layout, fix/bookmark-thumb-status-background]
 permissions:
   contents: read
 jobs:
@@ -34,7 +34,7 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Unit tests and types
         run: |
-          npm test -- tests/unit/documentBookmarks.test.js tests/unit/editorReadingControls.test.js tests/unit/editorAppearanceSettings.test.js tests/unit/editorPageTurning.test.ts tests/unit/androidPermissions.test.js
+          npm test -- tests/unit/documentBookmarks.test.js tests/unit/bookmarkScrollbar.test.js tests/unit/editorReadingControls.test.js tests/unit/editorAppearanceSettings.test.js tests/unit/editorPageTurning.test.ts tests/unit/androidPermissions.test.js
           npm run typecheck
       - name: Prepare Cordova
         run: npm run setup
@@ -57,6 +57,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions reading-progress-build/acode-reading-progress-debug.apk > reading-progress-build/permissions.txt
           node utils/scripts/checkApkPermissions.js reading-progress-build/permissions.txt reading-progress-build/baseline-permissions.txt
           cp /tmp/acode-bookmarks-preview.png reading-progress-build/
+          cp /tmp/acode-status-preview.png reading-progress-build/
           cd reading-progress-build
           sha256sum acode-reading-progress-debug.apk > SHA256SUMS
       - uses: actions/upload-artifact@v4

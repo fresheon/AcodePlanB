@@ -3180,6 +3180,7 @@ async function EditorManager($header, $body) {
 		onupdate: () => {},
 		activeFile: null,
 		isCodeMirror: true,
+		getBookmarkScrollbarPoint: () => $vScrollbar.bookmarkPoint,
 		addFile,
 		readOnlyCompartment,
 		getFile,

@@ -8,14 +8,17 @@ export function bookmarkExcerpt(text, position) {
   return [...before.slice(-(30 - trailing.length)), ...trailing].join("").replace(/\s+/g, " ").trim();
 }
 
-export function bookmarkScrollPosition(view) {
+export function bookmarkScrollPosition(view, scrollbarPoint) {
   if (!view.scrollDOM) return 0;
   const bounds = view.scrollDOM.getBoundingClientRect();
   const textBounds = view.contentDOM?.getBoundingClientRect();
   const x = Math.max(bounds.left + 1, (textBounds?.left ?? bounds.left) + 1);
-  const position = view.posAtCoords?.({ x, y: bounds.top + 1 });
+  const y = Number.isFinite(scrollbarPoint)
+    ? Math.max(bounds.top + 1, Math.min(bounds.bottom - 1, scrollbarPoint))
+    : bounds.top + 1;
+  const position = view.posAtCoords?.({ x, y });
   if (position != null) return Math.max(0, Math.min(view.state.doc.length, position));
-  return view.lineBlockAtHeight(Math.max(0, bounds.top - view.documentTop)).from;
+  return view.lineBlockAtHeight(Math.max(0, y - 1 - view.documentTop)).from;
 }
 
 export function createBookmarkStore(storage) {
@@ -121,7 +124,6 @@ export default function documentBookmarks({ manager, labels, storage = {
   let previousFocus = null;
   let closeTimer = null;
   let generation = 0;
-  let lastOutsideTap = 0;
   const background = new Map();
   function lockBackground() {
     document.body.classList.add("editor-bookmarks-modal");
@@ -208,7 +210,10 @@ export default function documentBookmarks({ manager, labels, storage = {
         };
         input.oninput = count;
         count();
-        row.append(input, counter, save, cancel);
+        const editActions = document.createElement("div");
+        editActions.className = "editor-bookmark-edit-actions";
+        editActions.append(cancel, save);
+        row.append(input, counter, editActions);
         requestAnimationFrame(() => { if (input.isConnected) input.focus(); });
       } else {
         const excerpt = button(item.text, () => {
@@ -305,7 +310,6 @@ export default function documentBookmarks({ manager, labels, storage = {
     if (!available()) return;
     const opening = ++generation;
     clearTimeout(closeTimer);
-    lastOutsideTap = 0;
     overlay.classList.remove("is-closing");
     overlay.inert = false;
     overlay.removeAttribute("aria-hidden");
@@ -327,14 +331,12 @@ export default function documentBookmarks({ manager, labels, storage = {
     const view = viewFor(file);
     const key = keyFor(file);
     knownKeys.set(file, key);
-    try { store.add(key, view.state.doc.toString(), bookmarkScrollPosition(view)); open(); }
+    try { store.add(key, view.state.doc.toString(), bookmarkScrollPosition(view, manager.getBookmarkScrollbarPoint?.())); open(); }
     catch (error) { open(); fail(error); }
   }
   function outsideTap() {
     if (!currentKey) return;
-    const now = Date.now();
-    if (lastOutsideTap && now - lastOutsideTap <= 400) close();
-    else lastOutsideTap = now;
+    close();
   }
   overlay.onclick = (event) => { if (event.target === overlay) outsideTap(); };
   manager.on("bookmark-document-changed", (file, changes) => perform(() => {

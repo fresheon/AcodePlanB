@@ -119,9 +119,9 @@ export default function editorReadingControls({
 		status.style.color = getComputedStyle(
 			pane.editor?.contentDOM || pane.element,
 		).color;
-		status.style.backgroundColor = getComputedStyle(
+		status.style.setProperty("--editor-status-background", getComputedStyle(
 			pane.editor?.dom || pane.element,
-		).backgroundColor;
+		).backgroundColor);
 		native("editor-status", [], (data) => {
 			if (fullscreenPane !== pane) return;
 			if (Number.isFinite(data.battery)) {

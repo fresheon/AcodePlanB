@@ -14,6 +14,7 @@ import tag from "html-tag-js";
  * @property {number} value
  * @property {number} size
  * @property {boolean} visible
+ * @property {number} bookmarkPoint
  */
 
 /**
@@ -287,6 +288,19 @@ export default function ScrollBar(options) {
 	Object.defineProperty($scrollbar, "visible", {
 		get() {
 			return this.dataset.hidden !== "true";
+		},
+	});
+	Object.defineProperty($scrollbar, "bookmarkPoint", {
+		get() {
+			// Hidden bars are detached after their fade. Measure the same track
+			// without showing it or changing its saved scroll fraction.
+			const connected = $scrollbar.isConnected;
+			if (!connected) options.parent.append($scrollbar);
+			resize(false);
+			const bounds = $container.getBoundingClientRect();
+			const point = isVertical ? bounds.top + scroll * height : bounds.left + scroll * width;
+			if (!connected) $scrollbar.remove();
+			return point;
 		},
 	});
 

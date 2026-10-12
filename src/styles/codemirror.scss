@@ -346,7 +346,7 @@ header.tile > .editor-reading-button:not(:disabled) {
   border: 0;
   .editor-pane-tabs { display: none; }
   // Status bar: 5px top inset + 12px icons + 6px below the icons.
-  .cm-editor { padding-top: calc(23px + var(--editor-padding-top, 30px)); padding-bottom: var(--editor-padding-bottom, 0px); box-sizing: border-box; }
+  .cm-editor { padding-top: 23px; padding-bottom: var(--editor-padding-bottom, 0px); box-sizing: border-box; }
   .editor-pane-content, .editor-container { min-height: 0; flex: 1; }
 }
 
@@ -387,6 +387,18 @@ header.tile > .editor-reading-button:not(:disabled) {
   pointer-events: none;
   line-height: 12px;
   > time, > span { height: 12px; line-height: 12px; margin-top: 0; margin-bottom: 0; }
+  background: transparent !important;
+  overflow: visible;
+  &::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 23px;
+    background: var(--editor-status-background, transparent);
+    z-index: -1;
+  }
   .editor-fullscreen-battery {
     margin-left: 15px;
     position: relative;
@@ -462,8 +474,9 @@ header.tile > .editor-reading-button:not(:disabled) {
     padding: 12px 44px 12px 12px;
     border-bottom: 1px solid #999;
     overflow-wrap: anywhere;
-    time { display: block; font-size: 12px; line-height: 1.4; margin-bottom: 6px; }
-    .editor-bookmark-excerpt { display: block; width: 100%; text-align: left; padding: 0; font-size: 15px; line-height: 1.5; white-space: pre-wrap; }
+    time { display: block; font-size: 12px; line-height: 1.2; margin-bottom: 3px; }
+    .editor-bookmark-excerpt { display: block; width: 100%; text-align: left; padding: 0; font-size: 15px; line-height: 1.25; white-space: pre-wrap; }
+    .editor-bookmark-edit-actions { display: flex; justify-content: flex-end; gap: 35px; margin-right: -32px; button { padding: 0; } }
     textarea { box-sizing: border-box; width: 100%; min-height: 80px; resize: vertical; font: inherit; background: #eee; color: #111; padding: 6px; }
     .editor-bookmark-counter { display: block; font-size: 12px; }
   }

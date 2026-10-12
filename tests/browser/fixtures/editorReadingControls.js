@@ -59,6 +59,18 @@ window.setupReading = () => {
 	const file = { id: "reading-browser-fixture", type: "editor", editable: false, loaded: true };
 	const pane = { element, editor: view };
 	const manager = { activeFile: file, getFilePane: () => pane, on: () => {} };
+	const thumb = document.createElement("div");
+	thumb.id = "bookmark-test-thumb";
+	thumb.style.cssText = "position:fixed;right:5px;top:90px;width:10px;height:50px;background:#39f;pointer-events:none";
+	document.body.append(thumb);
+	view.scrollDOM.addEventListener("scroll", () => {
+		const max = Math.max(1, view.scrollDOM.scrollHeight - view.scrollDOM.clientHeight);
+		thumb.style.top = `${90 + 100 * view.scrollDOM.scrollTop / max}px`;
+	});
+	manager.getBookmarkScrollbarPoint = () => {
+		const rect = thumb.getBoundingClientRect();
+		return (rect.top + rect.bottom) / 2;
+	};
 	const control = controls({
 		bookmarkStorage: (() => {
 			const data = new Map();

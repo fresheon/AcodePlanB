@@ -28,6 +28,14 @@ function setup(storage = makeStorage()) {
 }
 
 describe("document bookmarks", () => {
+  it("anchors to the scrollbar thumb center rather than the viewport top", () => {
+    const { controller, manager, view, file } = setup();
+    view.scrollDOM.getBoundingClientRect = () => ({ top: 0, bottom: 200, left: 0 });
+    manager.getBookmarkScrollbarPoint = () => 100;
+    view.posAtCoords = ({ y }) => y;
+    controller.add();
+    expect(controller.store.list(file.uri)[0].position).toBe(100);
+  });
   it("uses the scroll position rather than the cursor in either editor mode", () => {
     const { controller, view, file, doc } = setup();
     view.posAtCoords = () => 120;

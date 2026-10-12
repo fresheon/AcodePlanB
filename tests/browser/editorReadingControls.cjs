@@ -64,14 +64,19 @@ async function run() {
 
   // Bookmarks follow scrolling, preserve the document, and use the requested drawer layout.
   const beforeBookmarks = await page.evaluate(() => reading.view.state.doc.toString());
+  const expectedThumbBookmarks = [];
   for (const line of [100, 20]) {
    await page.evaluate(line => { const view = reading.view; view.dispatch({ selection: { anchor: 0 } }); view.scrollDOM.scrollTop = view.lineBlockAt(view.state.doc.line(line).from).top; }, line);
    await page.waitForTimeout(150);
+   expectedThumbBookmarks.push(await page.evaluate(() => {
+    const view = reading.view;
+    const rect = document.getElementById("bookmark-test-thumb").getBoundingClientRect();
+    return view.posAtCoords({ x: view.contentDOM.getBoundingClientRect().left + 1, y: (rect.top + rect.bottom) / 2 });
+   }));
    await page.locator("#editor-bookmark-add").tap();
    await page.waitForTimeout(250);
    await page.touchscreen.tap(400, 600);
-   await page.waitForTimeout(75);
-   await page.touchscreen.tap(400, 600);
+
    await page.waitForTimeout(250);
   }
   await page.locator("#editor-bookmark-list").tap();
@@ -80,11 +85,8 @@ async function run() {
   assert(Math.abs(bookmarkLayout.width - (412 * 2 / 3 - 15)) < 1);
   assert.equal(bookmarkLayout.height, 732);
   assert.equal(bookmarkLayout.background, "rgb(223, 223, 223)");
-  const scrollBookmarks = await page.evaluate(() => {
-   const doc = reading.view.state.doc;
-   return { positions: reading.control.bookmarks.store.list("untitled:reading-browser-fixture").map(item => item.position), ranges: [[doc.line(19).from, doc.line(20).to], [doc.line(99).from, doc.line(100).to]] };
-  });
-  for (let i = 0; i < 2; i++) assert(scrollBookmarks.positions[i] >= scrollBookmarks.ranges[i][0] && scrollBookmarks.positions[i] <= scrollBookmarks.ranges[i][1]);
+  const bookmarkPositions = await page.evaluate(() => reading.control.bookmarks.store.list("untitled:reading-browser-fixture").map(item => item.position));
+  assert.deepEqual(bookmarkPositions, expectedThumbBookmarks.sort((a,b)=>a-b));
   assert.equal(await page.locator(".editor-bookmark-row").count(), 2);
   assert.equal(await page.locator(".editor-bookmark-excerpt").first().evaluate(el => getComputedStyle(el).fontSize), "15px");
   assert.equal(await page.locator(".editor-bookmark-overlay").evaluate(el => getComputedStyle(el).backdropFilter), "blur(4px)");
@@ -92,6 +94,9 @@ async function run() {
   await page.screenshot({ path: "/tmp/acode-bookmarks-preview.png" });
   await page.locator(".editor-bookmark-options").first().tap();
   await page.getByRole("button", { name: "编辑", exact: true }).tap();
+  assert.deepEqual(await page.locator(".editor-bookmark-edit-actions button").allTextContents(), ["取消", "保存"]);
+  const actionGap = await page.locator(".editor-bookmark-edit-actions").evaluate(el => { const [a,b] = el.children; return b.getBoundingClientRect().left - a.getBoundingClientRect().right; });
+  assert.equal(actionGap, 35);
   await page.locator(".editor-bookmark-row textarea").fill("字".repeat(51));
   assert.equal(await page.getByRole("button", { name: "保存", exact: true }).isDisabled(), true);
   await page.locator(".editor-bookmark-row textarea").fill("自定义书签");
@@ -100,8 +105,7 @@ async function run() {
   await page.getByRole("button", { name: "全选", exact: true }).tap();
   assert.equal(await page.locator(".editor-bookmark-checkbox:checked").count(), 2);
   await page.touchscreen.tap(400, 600);
-   await page.waitForTimeout(75);
-   await page.touchscreen.tap(400, 600);
+
   await page.waitForTimeout(250);
   await page.locator("#editor-bookmark-list").tap();
   await page.waitForTimeout(250);
@@ -114,8 +118,7 @@ async function run() {
   await page.getByRole("alertdialog").getByRole("button", { name: "删除", exact: true }).tap();
   assert.equal(await page.locator(".editor-bookmark-row").count(), 0);
   await page.touchscreen.tap(400, 600);
-   await page.waitForTimeout(75);
-   await page.touchscreen.tap(400, 600);
+
   await page.waitForTimeout(250);
   assert.equal(await page.evaluate(() => reading.view.state.doc.toString()), beforeBookmarks);
   await page.evaluate(() => { reading.view.scrollDOM.scrollTop = 0; reading.view.dispatch({ selection: { anchor: 0 } }); });
@@ -152,7 +155,11 @@ async function run() {
 			const scroll = reading.view.scrollDOM.getBoundingClientRect();
 			return { top: scroll.top - bar.bottom, bottom: innerHeight - scroll.bottom, belowIcon: bar.bottom - icon.bottom, aboveIcon: icon.top };
 		});
-		assert.deepEqual(margins, { top: 22, bottom: 18, belowIcon: 6, aboveIcon: 5 });
+		assert.deepEqual(margins, { top: 0, bottom: 18, belowIcon: 6, aboveIcon: 5 });
+  assert.equal(await page.locator("#editor-fullscreen-status").evaluate(el => getComputedStyle(el, "::before").height), "23px");
+  assert.equal(await page.locator(".editor-content-fullscreen .cm-editor").evaluate(el => getComputedStyle(el).paddingTop), "23px");
+  await page.screenshot({ path: "/tmp/acode-status-preview.png" });
+
   const statusGaps = await page.evaluate(() => {
    const status = document.getElementById("editor-fullscreen-status");
    const clock = status.querySelector("time").getBoundingClientRect();

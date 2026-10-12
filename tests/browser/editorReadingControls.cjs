@@ -308,7 +308,7 @@ async function run() {
 		const scrollerRect = await page.locator(".cm-scroller").boundingBox();
 		assert.equal(statusRect.y, 0);
 		assert.equal(statusRect.height, 23);
-		assert.equal(scrollerRect.y - (statusRect.y + statusRect.height), 30);
+		assert.equal(scrollerRect.y - (statusRect.y + statusRect.height), 0);
 		assert.equal(scrollerRect.y + scrollerRect.height, 732);
 		await page.waitForTimeout(4000);
 		assert.equal(

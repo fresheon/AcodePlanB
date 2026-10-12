@@ -39,7 +39,7 @@ describe("Android permission policy", () => {
   it("rejects every media permission even if it was already in the baseline", () => {
     for (const suffix of ["AUDIO", "IMAGES", "VIDEO", "VISUAL_USER_SELECTED"]) {
       const media = `uses-permission: name='android.permission.READ_MEDIA_${suffix}'\n`;
-      expect(() => checkApkPermissions(baseline + media, baseline + media)).toThrow(/Forbidden media/);
+      expect(() => checkApkPermissions(media, baseline + media)).toThrow(/Forbidden media/);
     }
   });
   it("rejects unplanned permission additions", () => {

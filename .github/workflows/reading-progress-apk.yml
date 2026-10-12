@@ -1,7 +1,7 @@
 name: Reading progress test APK
 on:
   push:
-    branches: [feat/reading-progress-bookmark-icons]
+    branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions]
 permissions:
   contents: read
 jobs:
@@ -53,6 +53,9 @@ jobs:
           mkdir -p reading-progress-build
           cp platforms/android/app/build/outputs/apk/debug/app-debug.apk reading-progress-build/acode-reading-progress-debug.apk
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify reading-progress-build/acode-reading-progress-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions test-builds/acode-editor-appearance-debug.apk > reading-progress-build/baseline-permissions.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions reading-progress-build/acode-reading-progress-debug.apk > reading-progress-build/permissions.txt
+          node utils/scripts/checkApkPermissions.js reading-progress-build/permissions.txt reading-progress-build/baseline-permissions.txt
           cd reading-progress-build
           sha256sum acode-reading-progress-debug.apk > SHA256SUMS
       - uses: actions/upload-artifact@v4

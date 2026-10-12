@@ -112,6 +112,19 @@ async function run() {
   assert.equal(await page.locator(".editor-bookmark-checkbox").count(), 0);
   await page.getByRole("button", { name: "全选", exact: true }).tap();
   await page.locator(".editor-bookmark-toolbar").getByRole("button", { name: "删除", exact: true }).tap();
+  const confirmation = await page.getByRole("alertdialog").evaluate(el => {
+    const rect = el.getBoundingClientRect();
+    const buttons = [...el.querySelectorAll("button")].map(button => button.getBoundingClientRect());
+    return { width: rect.width, x: rect.left + rect.width / 2, y: rect.top + rect.height / 2,
+      gap: buttons[1].left - buttons[0].right, alignment: getComputedStyle(el).textAlign,
+      buttonCenter: (buttons[0].left + buttons[1].right) / 2, screenWidth: innerWidth, screenHeight: innerHeight };
+  });
+  assert.equal(confirmation.width, Math.min(confirmation.screenWidth * 0.6375, 240));
+  assert.equal(confirmation.x, confirmation.screenWidth / 2);
+  assert.equal(confirmation.y, confirmation.screenHeight / 2);
+  assert.equal(confirmation.buttonCenter, confirmation.x);
+  assert.equal(confirmation.gap, 30);
+  assert.equal(confirmation.alignment, "center");
   await page.getByRole("alertdialog").getByRole("button", { name: "取消", exact: true }).tap();
   assert.equal(await page.locator(".editor-bookmark-row").count(), 2);
   await page.locator(".editor-bookmark-toolbar").getByRole("button", { name: "删除", exact: true }).tap();
@@ -158,6 +171,11 @@ async function run() {
 		assert.deepEqual(margins, { top: 0, bottom: 18, belowIcon: 6, aboveIcon: 5 });
   assert.equal(await page.locator("#editor-fullscreen-status").evaluate(el => getComputedStyle(el, "::before").height), "23px");
   assert.equal(await page.locator(".editor-content-fullscreen .cm-editor").evaluate(el => getComputedStyle(el).paddingTop), "23px");
+  assert.equal(await page.locator(".editor-content-fullscreen .cm-content").evaluate(el => getComputedStyle(el).paddingTop), "22px");
+  await page.evaluate(() => reading.setAppearance({ editorPaddingTop: 40, editorPaddingBottom: 18 }));
+  assert.equal(await page.locator(".editor-content-fullscreen .cm-content").evaluate(el => getComputedStyle(el).paddingTop), "40px");
+  assert.equal(await page.locator("#editor-fullscreen-status").evaluate(el => el.getBoundingClientRect().height), 23);
+  await page.evaluate(() => reading.setAppearance({ editorPaddingTop: 22, editorPaddingBottom: 18 }));
   await page.screenshot({ path: "/tmp/acode-status-preview.png" });
 
   const statusGaps = await page.evaluate(() => {

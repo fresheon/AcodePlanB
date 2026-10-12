@@ -24,6 +24,18 @@ export function bookmarkScrollPosition(view, scrollbarPoint) {
   return view.lineBlockAtHeight(Math.max(0, y - 1 - view.documentTop)).from;
 }
 
+export function bookmarkPosition(view, scrollbarPoint) {
+  const bounds = view.scrollDOM?.getBoundingClientRect();
+  const point = Number.isFinite(view.__bookmarkNormalViewportTop) && bounds
+    ? bounds.top + scrollbarPoint - view.__bookmarkNormalViewportTop : scrollbarPoint;
+  if (!view.state.readOnly && bounds && Number.isFinite(point) && point >= bounds.top && point < bounds.bottom) {
+    const head = view.state.selection.main.head;
+    const cursor = view.coordsAtPos?.(head);
+    if (cursor && cursor.top >= bounds.top && cursor.bottom <= bounds.bottom && cursor.left >= bounds.left && cursor.left <= bounds.right) return head;
+  }
+  return bookmarkScrollPosition(view, scrollbarPoint);
+}
+
 export function createBookmarkStore(storage) {
   const storageKey = (documentKey) => `acode-document-bookmarks-v1:${encodeURIComponent(documentKey)}`;
   const sort = (items) => items.sort((a, b) => a.position - b.position || a.createdAt - b.createdAt || a.id.localeCompare(b.id));
@@ -255,7 +267,10 @@ export default function documentBookmarks({ manager, labels, storage = {
       }
       cancelConfirmation = () => finish(false);
       const cancel = button(text("cancel", "取消"), () => finish(false));
-      dialog.append(question, cancel, button(text("delete", "删除"), () => finish(true)));
+      const actions = document.createElement("div");
+      actions.className = "editor-bookmark-confirm-actions";
+      actions.append(cancel, button(text("delete", "删除"), () => finish(true)));
+      dialog.append(question, actions);
       modal.append(dialog);
       modal.onclick = (event) => { if (event.target === modal) outsideTap(); };
       panel.inert = true;
@@ -334,7 +349,7 @@ export default function documentBookmarks({ manager, labels, storage = {
     const view = viewFor(file);
     const key = keyFor(file);
     knownKeys.set(file, key);
-    try { store.add(key, view.state.doc.toString(), bookmarkScrollPosition(view, manager.getBookmarkScrollbarPoint?.())); open(); }
+    try { store.add(key, view.state.doc.toString(), bookmarkPosition(view, manager.getBookmarkScrollbarPoint?.())); open(); }
     catch (error) { open(); fail(error); }
   }
   function outsideTap() {

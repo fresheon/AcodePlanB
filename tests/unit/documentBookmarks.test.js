@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { EditorState } from "@codemirror/state";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import documentBookmarks, { bookmarkExcerpt, bookmarkScrollPosition, createBookmarkStore } from "components/documentBookmarks";
+import documentBookmarks, { bookmarkExcerpt, bookmarkPosition, bookmarkScrollPosition, createBookmarkStore } from "components/documentBookmarks";
 
 let active;
 afterEach(() => {
@@ -50,6 +50,24 @@ describe("document bookmarks", () => {
     view.documentTop = -40;
     view.lineBlockAtHeight = (height) => ({ from: height });
     expect(bookmarkScrollPosition(view)).toBe(40);
+  });
+  it("prefers an editing cursor only when cursor and scrollbar are both inside the viewport", () => {
+    const { view, doc } = setup();
+    view.scrollDOM.getBoundingClientRect = () => ({ top: 20, bottom: 200, left: 0, right: 300 });
+    view.posAtCoords = () => 120;
+    view.coordsAtPos = () => ({ top: 80, bottom: 100, left: 30 });
+    expect(bookmarkPosition(view, 100)).toBe(60);
+    expect(bookmarkPosition(view, 210)).toBe(120);
+    view.coordsAtPos = () => ({ top: 10, bottom: 19, left: 30 });
+    expect(bookmarkPosition(view, 100)).toBe(120);
+    view.coordsAtPos = () => ({ top: 80, bottom: 100, left: -10 });
+    expect(bookmarkPosition(view, 100)).toBe(120);
+    view.coordsAtPos = () => ({ top: 80, bottom: 100, left: 30 });
+    view.__bookmarkNormalViewportTop = 50;
+    expect(bookmarkPosition(view, 100)).toBe(60);
+    expect(bookmarkPosition(view, 40)).toBe(120);
+    view.state = EditorState.create({ doc, selection: { anchor: 60 }, extensions: [EditorState.readOnly.of(true)] });
+    expect(bookmarkPosition(view, 100)).toBe(120);
   });
   it("takes about thirty Unicode characters around the cursor, including both document edges", () => {
     const text = "读📚".repeat(40);

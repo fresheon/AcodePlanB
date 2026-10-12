@@ -1,3 +1,5 @@
+import documentBookmarks from "./documentBookmarks";
+
 export function readingProgressPercent(firstLine, totalLines) {
 	if (totalLines <= 1) return 0;
 	return Math.max(0, Math.min(100, Math.round(((firstLine - 1) / (totalLines - 1)) * 100)));
@@ -10,6 +12,7 @@ export default function editorReadingControls({
 	pencil,
 	exec,
 	labels,
+	bookmarkStorage,
 	native = (action, args, success) => {
 		window.cordova?.exec(success, console.error, "System", action, args);
 	},
@@ -71,6 +74,8 @@ export default function editorReadingControls({
 		["M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1Z", true],
 		["M12 5c3-2 7-2 10-1v15c-3-1-7-1-10 1Z", false],
 	]);
+	// Crop the SVG's empty margins so the visible book fills the battery height.
+	progress.querySelector("svg").setAttribute("viewBox", "1.25 2.5 21.5 18.25");
 	const progressPercentage = document.createElement("span");
 	progressPercentage.className = "editor-fullscreen-progress-percentage";
 	progressPercentage.textContent = "0%";
@@ -81,10 +86,9 @@ export default function editorReadingControls({
 	const bookmarkOutline = "M6 3h12v18l-6-4-6 4Z";
 	svgIcon(bookmarkList, [[bookmarkOutline, false], ["M9 7h6M9 10h6M9 13h4", false]]);
 	svgIcon(bookmarkAdd, [[bookmarkOutline, false], ["M9 10h6M12 7v6", false]]);
-	// Appearance only until bookmark operations are implemented.
-	bookmarkList.setAttribute("aria-disabled", "true");
-	bookmarkAdd.setAttribute("aria-disabled", "true");
-	bookmarkList.tabIndex = bookmarkAdd.tabIndex = -1;
+	const bookmarks = documentBookmarks({ manager, labels, storage: bookmarkStorage });
+	bookmarkList.onclick = () => bookmarks.open();
+	bookmarkAdd.onclick = () => bookmarks.add();
 	let hintTimer;
 	let statusTimer;
 	const progressMeasureKey = {};
@@ -239,6 +243,7 @@ export default function editorReadingControls({
 	}
 	function enter() {
 		if (fullscreenPane) return;
+		bookmarks.close();
 		const file = manager.activeFile;
 		if (file?.type !== "editor" || file.loading) return;
 		const pane = manager.getFilePane(file);
@@ -270,6 +275,8 @@ export default function editorReadingControls({
 	}
 	function update() {
 		const file = manager.activeFile;
+		bookmarks.update();
+		bookmarkList.disabled = bookmarkAdd.disabled = !bookmarks.available();
 		if (fullscreenPane && file !== fullscreenFile) exit();
 		if (fullscreenPane && file?.editable) file.editable = false;
 		if (file?.type !== "editor" || !pencil.isConnected) {
@@ -313,6 +320,7 @@ export default function editorReadingControls({
 	manager.on(["switch-file", "update:read-only", "file-loaded"], update);
 	manager.on("remove-file", (file) => {
 		if (file === fullscreenFile) exit();
+		if (file === manager.activeFile) bookmarks.close();
 	});
-	return { update, enter, exit, readOnlyButton, fullscreenButton, exitButton, bookmarkList, bookmarkAdd };
+	return { update, enter, exit, readOnlyButton, fullscreenButton, exitButton, bookmarkList, bookmarkAdd, bookmarks };
 }

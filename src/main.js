@@ -687,6 +687,17 @@ async function loadApp() {
 			progress: strings["editor-reading-progress"] || "Reading progress",
 			bookmarks: strings["editor-bookmarks"] || "Bookmarks",
 			addBookmark: strings["editor-add-bookmark"] || "Add bookmark",
+			delete: strings.delete,
+			selectAll: strings["select all"],
+			select: strings.select,
+			bookmarkEdit: strings.edit,
+			save: strings.save,
+			cancel: strings.cancel,
+			emptyBookmarks: strings["editor-bookmarks-empty"] || "No bookmarks",
+			bookmarkOptions: strings["editor-bookmarks-options"] || "Bookmark options",
+			editBookmark: strings["editor-bookmarks-edit"] || "Edit bookmark text",
+			deleteAllBookmarks: strings["editor-bookmarks-delete-all"] || "Delete all bookmarks?",
+			bookmarkError: strings["editor-bookmarks-error"] || "Unable to save bookmarks. Check app storage.",
 		},
 	});
 

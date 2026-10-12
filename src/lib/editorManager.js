@@ -3688,6 +3688,9 @@ async function EditorManager($header, $body) {
 			if (!file || file.type !== "editor") return;
 
 			if (update.docChanged) {
+				if (file.loaded && !file.loading && file.markChanged !== false) {
+					events.emit("bookmark-document-changed", file, update.changes);
+				}
 				events.emit("editor-state-changed", update.view);
 			}
 

@@ -914,5 +914,10 @@
 	"editor-page-lock-vertical": "左右翻页时禁止上下滚动",
 	"editor-reading-progress": "阅读进度",
 	"editor-bookmarks": "书签",
-	"editor-add-bookmark": "添加书签"
+	"editor-add-bookmark": "添加书签",
+	"editor-bookmarks-empty": "暂无书签",
+	"editor-bookmarks-options": "书签选项",
+	"editor-bookmarks-edit": "编辑书签文字",
+	"editor-bookmarks-delete-all": "删除全部书签？",
+	"editor-bookmarks-error": "书签无法保存，请检查应用存储空间。"
 }

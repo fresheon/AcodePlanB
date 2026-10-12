@@ -78,12 +78,12 @@ describe("editor reading controls", () => {
   expect(readingProgressPercent(1, 1)).toBe(0);
   expect(readingProgressPercent(1, 0)).toBe(0);
  });
- it("shows inert bookmark icons between the hammer and eye", () => {
+ it("shows bookmark icons without using the editor command dispatcher", () => {
   const { control, exec } = setup();
   control.bookmarkList.click();
   control.bookmarkAdd.click();
   expect(exec).not.toHaveBeenCalled();
-  expect(control.bookmarkList.getAttribute("aria-disabled")).toBe("true");
+  expect(control.bookmarkList.disabled).toBe(true);
   expect(control.bookmarkList.querySelector("svg")).not.toBeNull();
   expect(control.bookmarkAdd.querySelector("svg")).not.toBeNull();
  });

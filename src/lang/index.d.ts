@@ -907,6 +907,11 @@ declare type LangStrings = {
   "editor-reading-progress": string;
   "editor-bookmarks": string;
   "editor-add-bookmark": string;
+  "editor-bookmarks-empty": string;
+  "editor-bookmarks-options": string;
+  "editor-bookmarks-edit": string;
+  "editor-bookmarks-delete-all": string;
+  "editor-bookmarks-error": string;
 };
 
 declare var strings: LangStrings;

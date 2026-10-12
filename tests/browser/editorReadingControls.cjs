@@ -62,6 +62,49 @@ async function run() {
 		await page.evaluate(() => setupReading());
 		await page.waitForTimeout(150);
 
+  // Bookmarks use the actual cursor, preserve the document, and occupy two thirds.
+  const beforeBookmarks = await page.evaluate(() => reading.view.state.doc.toString());
+  for (const position of [100, 20]) {
+   await page.evaluate(position => reading.view.dispatch({ selection: { anchor: position } }), position);
+   await page.locator("#editor-bookmark-add").tap();
+   await page.waitForTimeout(250);
+   await page.touchscreen.tap(400, 600);
+   await page.waitForTimeout(250);
+  }
+  await page.locator("#editor-bookmark-list").tap();
+  await page.waitForTimeout(250);
+  const bookmarkLayout = await page.locator(".editor-bookmark-panel").evaluate(panel => ({ width: panel.getBoundingClientRect().width, height: panel.getBoundingClientRect().height, background: getComputedStyle(panel).backgroundColor }));
+  assert(Math.abs(bookmarkLayout.width - 412 * 2 / 3) < 1);
+  assert.equal(bookmarkLayout.height, 732);
+  assert.equal(bookmarkLayout.background, "rgb(200, 200, 200)");
+  assert.deepEqual(await page.evaluate(() => reading.control.bookmarks.store.list("untitled:reading-browser-fixture").map(item => item.position)), [20, 100]);
+  assert.equal(await page.locator(".editor-bookmark-row").count(), 2);
+  await page.screenshot({ path: "/tmp/acode-bookmarks-preview.png" });
+  await page.locator(".editor-bookmark-options").first().tap();
+  await page.getByRole("button", { name: "编辑", exact: true }).tap();
+  await page.locator(".editor-bookmark-row textarea").fill("字".repeat(51));
+  assert.equal(await page.getByRole("button", { name: "保存", exact: true }).isDisabled(), true);
+  await page.locator(".editor-bookmark-row textarea").fill("自定义书签");
+  await page.getByRole("button", { name: "保存", exact: true }).tap();
+  assert.equal(await page.locator(".editor-bookmark-excerpt").first().textContent(), "自定义书签");
+  await page.getByRole("button", { name: "全选", exact: true }).tap();
+  assert.equal(await page.locator(".editor-bookmark-checkbox:checked").count(), 2);
+  await page.touchscreen.tap(400, 600);
+  await page.waitForTimeout(250);
+  await page.locator("#editor-bookmark-list").tap();
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator(".editor-bookmark-checkbox").count(), 0);
+  await page.getByRole("button", { name: "全选", exact: true }).tap();
+  await page.locator(".editor-bookmark-toolbar").getByRole("button", { name: "删除", exact: true }).tap();
+  await page.getByRole("alertdialog").getByRole("button", { name: "取消", exact: true }).tap();
+  assert.equal(await page.locator(".editor-bookmark-row").count(), 2);
+  await page.locator(".editor-bookmark-toolbar").getByRole("button", { name: "删除", exact: true }).tap();
+  await page.getByRole("alertdialog").getByRole("button", { name: "删除", exact: true }).tap();
+  assert.equal(await page.locator(".editor-bookmark-row").count(), 0);
+  await page.touchscreen.tap(400, 600);
+  await page.waitForTimeout(250);
+  assert.equal(await page.evaluate(() => reading.view.state.doc.toString()), beforeBookmarks);
+
 		await page.locator("#editor-read-only-toggle").tap();
 		await page.evaluate(() => {
 			reading.setAppearance({ editorActiveLineColor: "#22bb66", editorSelectionColor: "#ffee00", editorCursorColor: "#ff0000", cursorWidth: 4, editorPaddingTop: 22, editorPaddingBottom: 18 });

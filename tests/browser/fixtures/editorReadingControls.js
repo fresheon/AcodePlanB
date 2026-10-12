@@ -56,10 +56,14 @@ window.setupReading = () => {
 			layout.of([]),
 		],
 	});
-	const file = { type: "editor", editable: false, loaded: true };
+	const file = { id: "reading-browser-fixture", type: "editor", editable: false, loaded: true };
 	const pane = { element, editor: view };
 	const manager = { activeFile: file, getFilePane: () => pane, on: () => {} };
 	const control = controls({
+		bookmarkStorage: (() => {
+			const data = new Map();
+			return { getItem: (key) => data.get(key) || null, setItem: (key, value) => data.set(key, value), removeItem: (key) => data.delete(key) };
+		})(),
 		manager,
 		header,
 		pencil,

@@ -10,4 +10,7 @@ and compare it with the baseline APK. Treat unexpected permission additions as
 build failures; do not expand the baseline merely to make a build pass. When a
 requested feature needs a permission, document that need and update the policy
 and validation deliberately. Preserve file access through user-selected files
-and folders. Keep backups and continue development on feature or fix branches.
+and folders. For each new modification task, copy the previous version's branch
+into exactly one new feature or fix branch and edit there. The previous branch
+is the backup; do not create an additional backup branch. Every delivered APK
+must pass signature verification as well as the final permission check.

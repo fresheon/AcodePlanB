@@ -914,5 +914,10 @@
 	"editor-page-lock-vertical": "Disable vertical scrolling during horizontal paging",
 	"editor-reading-progress": "Reading progress",
 	"editor-bookmarks": "Bookmarks",
-	"editor-add-bookmark": "Add bookmark"
+	"editor-add-bookmark": "Add bookmark",
+	"editor-bookmarks-empty": "No bookmarks",
+	"editor-bookmarks-options": "Bookmark options",
+	"editor-bookmarks-edit": "Edit bookmark text",
+	"editor-bookmarks-delete-all": "Delete all bookmarks?",
+	"editor-bookmarks-error": "Unable to save bookmarks. Check app storage."
 }

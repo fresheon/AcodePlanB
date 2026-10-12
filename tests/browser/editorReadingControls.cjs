@@ -168,13 +168,14 @@ async function run() {
 			const scroll = reading.view.scrollDOM.getBoundingClientRect();
 			return { top: scroll.top - bar.bottom, bottom: innerHeight - scroll.bottom, belowIcon: bar.bottom - icon.bottom, aboveIcon: icon.top };
 		});
-		assert.deepEqual(margins, { top: 0, bottom: 18, belowIcon: 6, aboveIcon: 5 });
+		assert.deepEqual(margins, { top: 22, bottom: 18, belowIcon: 6, aboveIcon: 5 });
   assert.equal(await page.locator("#editor-fullscreen-status").evaluate(el => getComputedStyle(el, "::before").height), "23px");
-  assert.equal(await page.locator(".editor-content-fullscreen .cm-editor").evaluate(el => getComputedStyle(el).paddingTop), "23px");
-  assert.equal(await page.locator(".editor-content-fullscreen .cm-content").evaluate(el => getComputedStyle(el).paddingTop), "22px");
+  assert.equal(await page.locator(".editor-content-fullscreen .cm-editor").evaluate(el => getComputedStyle(el).paddingTop), "45px");
+  assert.equal(await page.locator(".editor-content-fullscreen .cm-content").evaluate(el => getComputedStyle(el).paddingTop), "0px");
   await page.evaluate(() => reading.setAppearance({ editorPaddingTop: 40, editorPaddingBottom: 18 }));
-  assert.equal(await page.locator(".editor-content-fullscreen .cm-content").evaluate(el => getComputedStyle(el).paddingTop), "40px");
+  assert.equal(await page.locator(".editor-content-fullscreen .cm-content").evaluate(el => getComputedStyle(el).paddingTop), "0px");
   assert.equal(await page.locator("#editor-fullscreen-status").evaluate(el => el.getBoundingClientRect().height), 23);
+  assert.equal(await page.locator(".cm-scroller").evaluate(el => el.getBoundingClientRect().top), 63);
   await page.evaluate(() => reading.setAppearance({ editorPaddingTop: 22, editorPaddingBottom: 18 }));
   await page.screenshot({ path: "/tmp/acode-status-preview.png" });
 
@@ -326,7 +327,7 @@ async function run() {
 		const scrollerRect = await page.locator(".cm-scroller").boundingBox();
 		assert.equal(statusRect.y, 0);
 		assert.equal(statusRect.height, 23);
-		assert.equal(scrollerRect.y - (statusRect.y + statusRect.height), 0);
+		assert.equal(scrollerRect.y - (statusRect.y + statusRect.height), 30);
 		assert.equal(scrollerRect.y + scrollerRect.height, 732);
 		await page.waitForTimeout(4000);
 		assert.equal(
@@ -693,6 +694,71 @@ async function run() {
 				.evaluate((el) => getComputedStyle(el, "::before").maskImage),
 			"none",
 		);
+
+    // The user-set top space belongs to the viewport, across every navigation path.
+    await page.locator("#editor-content-fullscreen-toggle").tap();
+    async function assertPersistentTopSpace(padding, context) {
+      await page.waitForTimeout(180);
+      const geometry = await page.evaluate(() => {
+        const view = reading.view;
+        const bar = document.getElementById("editor-fullscreen-status").getBoundingClientRect();
+        const scroll = view.scrollDOM.getBoundingClientRect();
+        const clock = document.querySelector("#editor-fullscreen-status time").getBoundingClientRect();
+        const hit = document.elementFromPoint(100, scroll.top - 1);
+        return { gap: scroll.top - bar.bottom, statusHeight: bar.height, belowIcon: bar.bottom - clock.bottom,
+          contentPadding: getComputedStyle(view.contentDOM).paddingTop,
+          textInGap: !!hit?.closest(".cm-scroller"), scrollTop: view.scrollDOM.scrollTop };
+      });
+      assert.equal(geometry.gap, padding, context);
+      assert.equal(geometry.statusHeight, 23, context);
+      assert.equal(geometry.belowIcon, 6, context);
+      assert.equal(geometry.contentPadding, "0px", context);
+      assert.equal(geometry.textInGap, false, context);
+      return geometry.scrollTop;
+    }
+    for (const wrap of [false, true]) {
+      await page.evaluate(wrap => {
+        reading.setLayout(Array.from({ length: 200 }, (_, i) => `paragraph ${i} ` + "wrapped reading text ".repeat(6)).join("\n"), wrap, 1.73, 18, 47);
+        reading.setPaging(true, 0);
+        reading.view.scrollDOM.scrollTop = 0;
+      }, wrap);
+      await assertPersistentTopSpace(47, `first page, wrap=${wrap}`);
+      for (let n = 0; n < 3; n++) {
+        await page.touchscreen.tap(360, 200);
+        assert(await assertPersistentTopSpace(47, `tap next ${n}, wrap=${wrap}`) > 0);
+      }
+      await page.touchscreen.tap(50, 200);
+      await assertPersistentTopSpace(47, `tap previous, wrap=${wrap}`);
+      for (const lock of [false, true]) {
+        await page.evaluate(lock => reading.setPaging(true, 60, lock), lock);
+        await swipe(360, -100);
+        await assertPersistentTopSpace(47, `swipe next, lock=${lock}, wrap=${wrap}`);
+        await swipe(50, 100);
+        await assertPersistentTopSpace(47, `swipe previous, lock=${lock}, wrap=${wrap}`);
+      }
+      await page.evaluate(() => reading.setPaging(false, 60));
+      await page.locator(".cm-scroller").hover();
+      await page.mouse.wheel(0, 250);
+      await assertPersistentTopSpace(47, `wheel, wrap=${wrap}`);
+      await swipe(200, 0, -120);
+      await page.waitForTimeout(500);
+      await assertPersistentTopSpace(47, `vertical touch, wrap=${wrap}`);
+      for (const fraction of [0.1, 0.55, 1, 0]) {
+        await page.evaluate(fraction => {
+          const root = reading.view.scrollDOM;
+          root.scrollTop = fraction * (root.scrollHeight - root.clientHeight);
+        }, fraction);
+        await assertPersistentTopSpace(47, `scrollbar fraction=${fraction}, wrap=${wrap}`);
+      }
+      await page.evaluate(() => reading.view.dispatch({ effects: window.readingScrollIntoView(reading.view.state.doc.line(120).from) }));
+      await assertPersistentTopSpace(47, `jump to text, wrap=${wrap}`);
+    }
+    for (const padding of [0, 12, 80, 30]) {
+      await page.evaluate(padding => reading.setAppearance({ editorPaddingTop: padding }), padding);
+      await assertPersistentTopSpace(padding, `change setting at current page to ${padding}`);
+    }
+    await page.screenshot({ path: "/tmp/acode-status-preview.png" });
+    await page.touchscreen.tap(392, 20);
 		console.log(
 			"Browser regression passed: real toolbar hit testing, both touch buttons, fullscreen exit, read-only selection guard, scrolling, editable text input, paging swipes, tap paging and paging disable.",
 		);

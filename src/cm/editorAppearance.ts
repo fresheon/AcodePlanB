@@ -119,7 +119,7 @@ export function editorAppearance(values: AppearanceSettings) {
     "&": root,
     ".cm-content": content,
     ".editor-content-fullscreen &": { "--editor-content-bottom": "0px" },
-    ".editor-content-fullscreen & .cm-content": { paddingTop: "var(--editor-padding-top, 30px)" },
+    ".editor-content-fullscreen & .cm-content": { paddingTop: "0px" },
   };
   const selection = color(values.editorSelectionColor);
   const cursor = color(values.editorCursorColor);

@@ -345,8 +345,9 @@ header.tile > .editor-reading-button:not(:disabled) {
   margin: 0;
   border: 0;
   .editor-pane-tabs { display: none; }
-  // Status bar: 5px top inset + 12px icons + 6px below the icons.
-  .cm-editor { padding-top: 23px; padding-bottom: var(--editor-padding-bottom, 0px); box-sizing: border-box; }
+  // Keep reading whitespace outside the scrollable document on every page.
+  // The separate status background remains 5px + 12px + 6px high.
+  .cm-editor { padding-top: calc(23px + var(--editor-padding-top, 30px)); padding-bottom: var(--editor-padding-bottom, 0px); box-sizing: border-box; }
   .editor-pane-content, .editor-container { min-height: 0; flex: 1; }
 }
 

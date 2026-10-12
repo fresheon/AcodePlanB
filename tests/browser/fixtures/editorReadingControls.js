@@ -12,6 +12,7 @@ import {
 import { editorAppearance } from "../../../src/cm/editorAppearance.ts";
 import { editorPageTurning } from "../../../src/cm/editorPageTurning.ts";
 import controls from "../../../src/components/editorReadingControls.js";
+window.readingScrollIntoView = (position) => EditorView.scrollIntoView(position, { y: "start" });
 window.setupReading = () => {
 	const header = document.createElement("header"),
 		pencil = document.createElement("span");
@@ -103,7 +104,7 @@ window.setupReading = () => {
 				EditorView.theme({ ".cm-cursor": { borderLeftWidth: `${values.cursorWidth || 2}px` } }),
 			]) });
 		},
-		setLayout(doc, wrap, lineHeight, paragraphSpacing) {
+		setLayout(doc, wrap, lineHeight, paragraphSpacing, editorPaddingTop) {
 			view.dispatch({
 				changes: { from: 0, to: view.state.doc.length, insert: doc },
 				effects: layout.reconfigure([
@@ -112,7 +113,7 @@ window.setupReading = () => {
 						"&": { fontSize: "17px" },
 						".cm-content": { lineHeight: String(lineHeight) },
 					}),
-					editorAppearance({ editorParagraphSpacing: paragraphSpacing }),
+					editorAppearance({ editorParagraphSpacing: paragraphSpacing, editorPaddingTop }),
 				]),
 			});
 		},

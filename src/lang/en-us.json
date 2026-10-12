@@ -911,5 +911,8 @@
 	"editor-appearance-top": "Top text padding",
 	"editor-appearance-bottom": "Bottom text padding",
 	"editor-active-line-color": "Clicked paragraph highlight color",
-	"editor-page-lock-vertical": "Disable vertical scrolling during horizontal paging"
+	"editor-page-lock-vertical": "Disable vertical scrolling during horizontal paging",
+	"editor-reading-progress": "Reading progress",
+	"editor-bookmarks": "Bookmarks",
+	"editor-add-bookmark": "Add bookmark"
 }

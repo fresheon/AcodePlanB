@@ -904,6 +904,9 @@ declare type LangStrings = {
   "editor-reading-edit": string;
   "editor-reading-fullscreen": string;
   "editor-reading-exit": string;
+  "editor-reading-progress": string;
+  "editor-bookmarks": string;
+  "editor-add-bookmark": string;
 };
 
 declare var strings: LangStrings;

@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import editorReadingControls from "components/editorReadingControls";
+import editorReadingControls, { readingProgressPercent } from "components/editorReadingControls";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const controls = [];
@@ -71,6 +71,47 @@ function setup() {
 	};
 }
 describe("editor reading controls", () => {
+ it("anchors progress at the first line, including empty and one-line documents", () => {
+  expect(readingProgressPercent(1, 101)).toBe(0);
+  expect(readingProgressPercent(51, 101)).toBe(50);
+  expect(readingProgressPercent(101, 101)).toBe(100);
+  expect(readingProgressPercent(1, 1)).toBe(0);
+  expect(readingProgressPercent(1, 0)).toBe(0);
+ });
+ it("shows inert bookmark icons between the hammer and eye", () => {
+  const { control, exec } = setup();
+  control.bookmarkList.click();
+  control.bookmarkAdd.click();
+  expect(exec).not.toHaveBeenCalled();
+  expect(control.bookmarkList.getAttribute("aria-disabled")).toBe("true");
+  expect(control.bookmarkList.querySelector("svg")).not.toBeNull();
+  expect(control.bookmarkAdd.querySelector("svg")).not.toBeNull();
+ });
+ it("updates progress after scrolling and stops listening on exit", () => {
+  const { control, pane } = setup();
+  const scroller = document.createElement("div");
+  pane.editor.scrollDOM = scroller;
+  pane.editor.scrollSnapshot = () => ({});
+  pane.editor.dispatch = vi.fn();
+  pane.editor.documentTop = 0;
+  pane.editor.lineBlockAt = () => ({ top: 0, from: 0 });
+  pane.editor.lineBlockAtHeight = () => ({ top: 0, from: 0 });
+  let firstLine = 1;
+  pane.editor.state = { doc: { lines: 101, lineAt: () => ({ number: firstLine }) } };
+  pane.editor.requestMeasure = (request) => {
+   if (request?.key) request.write(request.read());
+  };
+  control.enter();
+  const percentage = document.querySelector(".editor-fullscreen-progress-percentage");
+  expect(percentage.textContent).toBe("0%");
+  firstLine = 51;
+  scroller.dispatchEvent(new Event("scroll"));
+  expect(percentage.textContent).toBe("50%");
+  control.exit();
+  firstLine = 101;
+  scroller.dispatchEvent(new Event("scroll"));
+  expect(percentage.textContent).toBe("50%");
+ });
 	it("hides native bars, shows status, and retains the invisible exit target after four seconds", () => {
 		vi.useFakeTimers();
 		const { control, native } = setup();
@@ -133,6 +174,8 @@ describe("editor reading controls", () => {
 		const { control, header, pencil, exec, file, handlers } = setup();
 		expect([...header.children]).toEqual([
 			pencil,
+			control.bookmarkList,
+			control.bookmarkAdd,
 			control.readOnlyButton,
 			control.fullscreenButton,
 		]);

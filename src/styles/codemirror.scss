@@ -381,10 +381,11 @@ header.tile > .editor-reading-button:not(:disabled) {
   font-size: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0;
   pointer-events: none;
   line-height: 1;
   .editor-fullscreen-battery {
+    margin-left: 15px;
     position: relative;
     width: 1.4em;
     height: 1em;
@@ -403,7 +404,26 @@ header.tile > .editor-reading-button:not(:disabled) {
     }
   }
   .editor-fullscreen-battery-level { display: block; height: 100%; background: currentColor; }
+  .editor-fullscreen-battery-percentage { margin-left: 6px; }
+  .editor-fullscreen-progress {
+    margin-left: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    svg { width: 14px; height: 12px; }
+  }
 }
+
+.editor-bookmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  svg { width: 20px; height: 20px; }
+  &::before { content: none; }
+}
+
+.editor-content-fullscreen-mode .editor-bookmark { display: none; }
 
 // Distinct tools and editing indicators, tinted with the header foreground.
 .icon.editor-tools-hammer::before, .icon.editor-mode-pencil::before {

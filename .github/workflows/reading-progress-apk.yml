@@ -1,0 +1,58 @@
+name: Reading progress test APK
+on:
+  push:
+    branches: [feat/reading-progress-bookmark-icons]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14'
+      - name: Android SDK
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Install and prepare Cordova
+        run: |
+          npm ci --no-audit --no-fund
+          npm run setup
+      - name: Unit tests and types
+        run: |
+          npm test
+          npm run typecheck
+      - name: Build web assets
+        run: |
+          node utils/config.js d paid
+          npx rspack --mode development
+      - name: Browser regression
+        run: |
+          npm install --no-save --package-lock=false playwright
+          npx playwright install --with-deps chromium
+          CHROMIUM_PATH="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')" node tests/browser/editorReadingControls.cjs
+      - name: Build and verify debug APK
+        run: |
+          npx cordova build android -- --packageType=apk
+          mkdir -p reading-progress-build
+          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk reading-progress-build/acode-reading-progress-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify reading-progress-build/acode-reading-progress-debug.apk
+          cd reading-progress-build
+          sha256sum acode-reading-progress-debug.apk > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acode-reading-progress-debug
+          path: reading-progress-build/
+          if-no-files-found: error

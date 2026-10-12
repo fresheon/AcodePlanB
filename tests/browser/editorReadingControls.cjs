@@ -94,6 +94,31 @@ async function run() {
 			return { top: scroll.top - bar.bottom, bottom: innerHeight - scroll.bottom, belowIcon: bar.bottom - icon.bottom, aboveIcon: icon.top };
 		});
 		assert.deepEqual(margins, { top: 22, bottom: 18, belowIcon: 6, aboveIcon: 5 });
+  const statusGaps = await page.evaluate(() => {
+   const status = document.getElementById("editor-fullscreen-status");
+   const clock = status.querySelector("time").getBoundingClientRect();
+   const battery = status.querySelector(".editor-fullscreen-battery").getBoundingClientRect();
+   const percentage = status.querySelector(".editor-fullscreen-battery-percentage").getBoundingClientRect();
+   const progress = status.querySelector(".editor-fullscreen-progress").getBoundingClientRect();
+   return [battery.left - clock.right, percentage.left - battery.right, progress.left - percentage.right];
+  });
+  assert.deepEqual(statusGaps, [15, 6, 15]);
+  await page.evaluate(() => {
+   const view = reading.view;
+   view.scrollDOM.scrollTop = view.lineBlockAt(view.state.doc.line(101).from).top;
+  });
+  await page.waitForTimeout(150);
+  const expectedProgress = await page.evaluate(() => {
+   const view = reading.view;
+   const block = view.lineBlockAtHeight(Math.max(0, view.scrollDOM.getBoundingClientRect().top - view.documentTop));
+   return Math.round((view.state.doc.lineAt(block.from).number - 1) / (view.state.doc.lines - 1) * 100) + "%";
+  });
+  assert.equal(await page.locator(".editor-fullscreen-progress-percentage").textContent(), expectedProgress);
+  assert.notEqual(expectedProgress, "0%");
+  await page.evaluate(() => { reading.view.scrollDOM.scrollTop = 0; });
+  await page.waitForTimeout(150);
+  assert.equal(await page.locator(".editor-fullscreen-progress-percentage").textContent(), "0%");
+
 		await page.touchscreen.tap(392, 20);
 		await page.evaluate(() => reading.setAppearance({}));
 		await page.waitForTimeout(150);

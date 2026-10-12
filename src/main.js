@@ -684,6 +684,9 @@ async function loadApp() {
 			edit: strings["editor-reading-edit"] || "Switch to editing",
 			fullscreen: strings["editor-reading-fullscreen"] || "Fullscreen text",
 			exit: strings["editor-reading-exit"] || "Exit fullscreen",
+			progress: strings["editor-reading-progress"] || "Reading progress",
+			bookmarks: strings["editor-bookmarks"] || "Bookmarks",
+			addBookmark: strings["editor-add-bookmark"] || "Add bookmark",
 		},
 	});
 

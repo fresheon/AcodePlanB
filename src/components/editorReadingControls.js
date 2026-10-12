@@ -1,3 +1,8 @@
+export function readingProgressPercent(firstLine, totalLines) {
+	if (totalLines <= 1) return 0;
+	return Math.max(0, Math.min(100, Math.round(((firstLine - 1) / (totalLines - 1)) * 100)));
+}
+
 /** Toolbar controls share the existing read-only command and preserve pane state. */
 export default function editorReadingControls({
 	manager,
@@ -42,9 +47,63 @@ export default function editorReadingControls({
 	level.className = "editor-fullscreen-battery-level";
 	battery.append(level);
 	const percentage = document.createElement("span");
-	status.append(clock, battery, percentage);
+	percentage.className = "editor-fullscreen-battery-percentage";
+	function svgIcon(element, paths) {
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		svg.setAttribute("viewBox", "0 0 24 24");
+		svg.setAttribute("aria-hidden", "true");
+		for (const [d, filled] of paths) {
+			const path = document.createElementNS(svg.namespaceURI, "path");
+			path.setAttribute("d", d);
+			path.setAttribute("fill", filled ? "currentColor" : "none");
+			path.setAttribute("stroke", "currentColor");
+			path.setAttribute("stroke-width", "1.5");
+			path.setAttribute("stroke-linecap", "round");
+			path.setAttribute("stroke-linejoin", "round");
+			svg.append(path);
+		}
+		element.append(svg);
+	}
+	const progress = document.createElement("span");
+	progress.className = "editor-fullscreen-progress";
+	progress.setAttribute("aria-label", labels.progress || "Reading progress");
+	svgIcon(progress, [
+		["M12 5C9 3 5 3 2 4v15c3-1 7-1 10 1Z", true],
+		["M12 5c3-2 7-2 10-1v15c-3-1-7-1-10 1Z", false],
+	]);
+	const progressPercentage = document.createElement("span");
+	progressPercentage.className = "editor-fullscreen-progress-percentage";
+	progressPercentage.textContent = "0%";
+	progress.append(progressPercentage);
+	status.append(clock, battery, percentage, progress);
+	const bookmarkList = button("editor-bookmark-list", "editor-bookmark", labels.bookmarks || "Bookmarks");
+	const bookmarkAdd = button("editor-bookmark-add", "editor-bookmark", labels.addBookmark || "Add bookmark");
+	const bookmarkOutline = "M6 3h12v18l-6-4-6 4Z";
+	svgIcon(bookmarkList, [[bookmarkOutline, false], ["M9 7h6M9 10h6M9 13h4", false]]);
+	svgIcon(bookmarkAdd, [[bookmarkOutline, false], ["M9 10h6M12 7v6", false]]);
+	// Appearance only until bookmark operations are implemented.
+	bookmarkList.setAttribute("aria-disabled", "true");
+	bookmarkAdd.setAttribute("aria-disabled", "true");
+	bookmarkList.tabIndex = bookmarkAdd.tabIndex = -1;
 	let hintTimer;
 	let statusTimer;
+	const progressMeasureKey = {};
+	function refreshProgress() {
+		const pane = fullscreenPane;
+		const view = pane?.editor;
+		if (!view?.scrollDOM || !view.state?.doc) return;
+		view.requestMeasure({
+			key: progressMeasureKey,
+			read() {
+				const top = view.scrollDOM.getBoundingClientRect().top;
+				const first = view.lineBlockAtHeight(Math.max(0, top - view.documentTop));
+				return readingProgressPercent(view.state.doc.lineAt(first.from).number, view.state.doc.lines);
+			},
+			write(value) {
+				if (fullscreenPane === pane) progressPercentage.textContent = `${value}%`;
+			},
+		});
+	}
 	function refreshStatus() {
 		clock.textContent = new Date().toLocaleTimeString([], {
 			hour: "2-digit",
@@ -52,6 +111,7 @@ export default function editorReadingControls({
 		});
 		const pane = fullscreenPane;
 		if (!pane) return;
+		refreshProgress();
 		status.style.color = getComputedStyle(
 			pane.editor?.contentDOM || pane.element,
 		).color;
@@ -154,6 +214,8 @@ export default function editorReadingControls({
 		document.body.classList.remove("editor-content-fullscreen-mode");
 		clearTimeout(hintTimer);
 		clearInterval(statusTimer);
+		pane.editor?.scrollDOM?.removeEventListener("scroll", refreshProgress);
+		window.removeEventListener("resize", refreshProgress);
 		document.removeEventListener("pointerdown", onPointerDown, true);
 		document.removeEventListener("pointerup", onPointerUp, true);
 		document.removeEventListener("pointercancel", onPointerCancel, true);
@@ -193,6 +255,8 @@ export default function editorReadingControls({
 		document.body.append(pane.element, status, exitButton);
 		restoreScroll();
 		native("editor-immersive", [true], () => pane.editor?.requestMeasure());
+		pane.editor?.scrollDOM?.addEventListener("scroll", refreshProgress, { passive: true });
+		window.addEventListener("resize", refreshProgress);
 		refreshStatus();
 		statusTimer = setInterval(refreshStatus, 15000);
 		showExitHint();
@@ -211,6 +275,8 @@ export default function editorReadingControls({
 		if (file?.type !== "editor" || !pencil.isConnected) {
 			readOnlyButton.remove();
 			fullscreenButton.remove();
+			bookmarkList.remove();
+			bookmarkAdd.remove();
 			return;
 		}
 		const readOnly = !file.editable;
@@ -222,7 +288,9 @@ export default function editorReadingControls({
 		readOnlyButton.setAttribute("aria-label", label);
 		readOnlyButton.disabled =
 			!!fullscreenPane || !!file.loading || !file.loaded;
-		header.insertBefore(readOnlyButton, pencil.nextSibling);
+		header.insertBefore(bookmarkList, pencil.nextSibling);
+		header.insertBefore(bookmarkAdd, bookmarkList.nextSibling);
+		header.insertBefore(readOnlyButton, bookmarkAdd.nextSibling);
 		header.insertBefore(fullscreenButton, readOnlyButton.nextSibling);
 	}
 	readOnlyButton.onclick = () => {
@@ -246,5 +314,5 @@ export default function editorReadingControls({
 	manager.on("remove-file", (file) => {
 		if (file === fullscreenFile) exit();
 	});
-	return { update, enter, exit, readOnlyButton, fullscreenButton, exitButton };
+	return { update, enter, exit, readOnlyButton, fullscreenButton, exitButton, bookmarkList, bookmarkAdd };
 }

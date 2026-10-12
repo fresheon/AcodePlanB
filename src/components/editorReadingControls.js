@@ -212,6 +212,7 @@ export default function editorReadingControls({
 	function exit() {
 		if (!fullscreenPane) return;
 		const pane = fullscreenPane;
+		if (pane.editor) delete pane.editor.__bookmarkNormalViewportTop;
 		const restoreScroll = captureScroll(pane);
 		if (placeholder?.parentNode) placeholder.replaceWith(pane.element);
 		pane.element.classList.remove("editor-content-fullscreen");
@@ -248,6 +249,7 @@ export default function editorReadingControls({
 		if (file?.type !== "editor" || file.loading) return;
 		const pane = manager.getFilePane(file);
 		if (!pane?.element?.parentNode) return;
+		if (pane.editor?.scrollDOM) pane.editor.__bookmarkNormalViewportTop = pane.editor.scrollDOM.getBoundingClientRect().top;
 		const restoreScroll = captureScroll(pane);
 		if (file.editable) exec("read-only");
 		fullscreenFile = file;

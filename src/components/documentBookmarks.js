@@ -13,8 +13,11 @@ export function bookmarkScrollPosition(view, scrollbarPoint) {
   const bounds = view.scrollDOM.getBoundingClientRect();
   const textBounds = view.contentDOM?.getBoundingClientRect();
   const x = Math.max(bounds.left + 1, (textBounds?.left ?? bounds.left) + 1);
-  const y = Number.isFinite(scrollbarPoint)
-    ? Math.max(bounds.top + 1, Math.min(bounds.bottom - 1, scrollbarPoint))
+  const equivalentPoint = Number.isFinite(view.__bookmarkNormalViewportTop)
+    ? bounds.top + scrollbarPoint - view.__bookmarkNormalViewportTop
+    : scrollbarPoint;
+  const y = Number.isFinite(equivalentPoint)
+    ? Math.max(bounds.top + 1, Math.min(bounds.bottom - 1, equivalentPoint))
     : bounds.top + 1;
   const position = view.posAtCoords?.({ x, y });
   if (position != null) return Math.max(0, Math.min(view.state.doc.length, position));

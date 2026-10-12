@@ -35,6 +35,8 @@ describe("document bookmarks", () => {
     view.posAtCoords = ({ y }) => y;
     controller.add();
     expect(controller.store.list(file.uri)[0].position).toBe(100);
+    view.__bookmarkNormalViewportTop = 50;
+    expect(bookmarkScrollPosition(view, 100)).toBe(50);
   });
   it("uses the scroll position rather than the cursor in either editor mode", () => {
     const { controller, view, file, doc } = setup();

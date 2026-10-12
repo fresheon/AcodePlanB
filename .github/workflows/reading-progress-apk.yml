@@ -16,6 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+          cache: npm
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -29,14 +30,14 @@ jobs:
           gradle-version: '8.14'
       - name: Android SDK
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
-      - name: Install and prepare Cordova
-        run: |
-          npm ci --no-audit --no-fund
-          npm run setup
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
       - name: Unit tests and types
         run: |
           npm test
           npm run typecheck
+      - name: Prepare Cordova
+        run: npm run setup
       - name: Build web assets
         run: |
           node utils/config.js d paid

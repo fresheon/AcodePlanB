@@ -91,6 +91,7 @@ describe("editor reading controls", () => {
   const { control, pane } = setup();
   const scroller = document.createElement("div");
   pane.editor.scrollDOM = scroller;
+  pane.editor.dom = pane.editor.contentDOM;
   pane.editor.scrollSnapshot = () => ({});
   pane.editor.dispatch = vi.fn();
   pane.editor.documentTop = 0;

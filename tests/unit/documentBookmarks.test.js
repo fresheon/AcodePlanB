@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { EditorState } from "@codemirror/state";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import documentBookmarks, { bookmarkExcerpt, createBookmarkStore } from "components/documentBookmarks";
+import documentBookmarks, { bookmarkExcerpt, bookmarkScrollPosition, createBookmarkStore } from "components/documentBookmarks";
 
 let active;
 afterEach(() => {
@@ -17,6 +17,8 @@ function setup(storage = makeStorage()) {
   const doc = "甲乙丙丁戊己庚辛壬癸".repeat(20);
   const file = { id: "test", uri: "content://document/a.txt", loaded: true, type: "editor" };
   const view = { state: EditorState.create({ doc, selection: { anchor: 60 } }), dispatch: vi.fn(), focus: vi.fn() };
+  view.scrollDOM = document.createElement("div");
+  view.posAtCoords = () => 60;
   const handlers = new Map();
   const manager = { activeFile: file, getFilePane: () => ({ editor: view }), on: (name, handler) => handlers.set(name, handler) };
   active = documentBookmarks({ manager, labels: {}, storage });
@@ -26,6 +28,19 @@ function setup(storage = makeStorage()) {
 }
 
 describe("document bookmarks", () => {
+  it("uses the scroll position rather than the cursor in either editor mode", () => {
+    const { controller, view, file, doc } = setup();
+    view.posAtCoords = () => 120;
+    for (const readOnly of [true, false]) {
+      view.state = EditorState.create({ doc, selection: { anchor: 5 }, extensions: [EditorState.readOnly.of(readOnly)] });
+      controller.add();
+    }
+    expect(controller.store.list(file.uri).map((item) => item.position)).toEqual([120, 120]);
+    view.posAtCoords = () => null;
+    view.documentTop = -40;
+    view.lineBlockAtHeight = (height) => ({ from: height });
+    expect(bookmarkScrollPosition(view)).toBe(40);
+  });
   it("takes about thirty Unicode characters around the cursor, including both document edges", () => {
     const text = "读📚".repeat(40);
     for (const position of [0, 30, text.length]) expect(Array.from(bookmarkExcerpt(text, position))).toHaveLength(30);
@@ -90,7 +105,7 @@ describe("document bookmarks", () => {
     expect(controller.store.list(file.uri)).toHaveLength(2);
     expect(controller.overlay.querySelector('[role="alertdialog"]')).toBeNull();
     click("全选");
-    controller.overlay.click();
+    controller.overlay.click(); controller.overlay.click();
     controller.open();
     expect(controller.overlay.querySelector("input[type=checkbox]")).toBeNull();
     expect(controller.overlay.querySelector("footer button").disabled).toBe(true);
@@ -110,12 +125,13 @@ describe("document bookmarks", () => {
     expect(view.dispatch).not.toHaveBeenCalled();
     controller.overlay.querySelector(".editor-bookmark-options").click(); click("编辑");
     controller.overlay.querySelector("textarea").value = "未保存";
-    controller.overlay.click(); controller.open();
+    controller.overlay.click(); controller.overlay.click(); controller.open();
     expect(controller.store.list(file.uri)[0].text).toBe("自定义书签");
   });
   it("does not delete after an outside click dismisses the all-delete confirmation", async () => {
     const { controller, file, click } = setup();
     controller.add(); click("全选"); click("删除", controller.overlay.querySelector("footer"));
+    controller.overlay.querySelector(".editor-bookmark-confirm-overlay").click();
     controller.overlay.querySelector(".editor-bookmark-confirm-overlay").click();
     await Promise.resolve();
     expect(controller.store.list(file.uri)).toHaveLength(1);

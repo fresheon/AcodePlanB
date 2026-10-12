@@ -8,6 +8,16 @@ export function bookmarkExcerpt(text, position) {
   return [...before.slice(-(30 - trailing.length)), ...trailing].join("").replace(/\s+/g, " ").trim();
 }
 
+export function bookmarkScrollPosition(view) {
+  if (!view.scrollDOM) return 0;
+  const bounds = view.scrollDOM.getBoundingClientRect();
+  const textBounds = view.contentDOM?.getBoundingClientRect();
+  const x = Math.max(bounds.left + 1, (textBounds?.left ?? bounds.left) + 1);
+  const position = view.posAtCoords?.({ x, y: bounds.top + 1 });
+  if (position != null) return Math.max(0, Math.min(view.state.doc.length, position));
+  return view.lineBlockAtHeight(Math.max(0, bounds.top - view.documentTop)).from;
+}
+
 export function createBookmarkStore(storage) {
   const storageKey = (documentKey) => `acode-document-bookmarks-v1:${encodeURIComponent(documentKey)}`;
   const sort = (items) => items.sort((a, b) => a.position - b.position || a.createdAt - b.createdAt || a.id.localeCompare(b.id));
@@ -111,6 +121,22 @@ export default function documentBookmarks({ manager, labels, storage = {
   let previousFocus = null;
   let closeTimer = null;
   let generation = 0;
+  let lastOutsideTap = 0;
+  const background = new Map();
+  function lockBackground() {
+    document.body.classList.add("editor-bookmarks-modal");
+    for (const element of document.body.children) {
+      if (element === overlay || ["SCRIPT", "STYLE", "LINK"].includes(element.tagName)) continue;
+      if (!background.has(element)) background.set(element, element.inert);
+      element.inert = true;
+    }
+  }
+  function unlockBackground() {
+    for (const [element, inert] of background) element.inert = inert;
+    background.clear();
+    document.body.classList.remove("editor-bookmarks-modal");
+    previousFocus?.isConnected && previousFocus.focus();
+  }
   const knownKeys = new WeakMap();
   const keyFor = (file) => file?.uri || (file?.id != null ? `untitled:${file.id}` : null);
   const viewFor = (file) => manager.getFilePane(file)?.editor;
@@ -223,7 +249,7 @@ export default function documentBookmarks({ manager, labels, storage = {
       const cancel = button(text("cancel", "取消"), () => finish(false));
       dialog.append(question, cancel, button(text("delete", "删除"), () => finish(true)));
       modal.append(dialog);
-      modal.onclick = (event) => { if (event.target === modal) close(); };
+      modal.onclick = (event) => { if (event.target === modal) outsideTap(); };
       panel.inert = true;
       overlay.append(modal);
       cancel.focus();
@@ -269,15 +295,17 @@ export default function documentBookmarks({ manager, labels, storage = {
     if (overlay.isConnected) closeTimer = setTimeout(() => {
       overlay.hidden = true;
       overlay.remove();
+      unlockBackground();
     }, 200);
+    else unlockBackground();
     currentKey = null; selecting = false; selected.clear(); editing = menu = null;
     document.removeEventListener("keydown", onKeyDown, true);
-    previousFocus?.isConnected && previousFocus.focus();
   }
   function open() {
     if (!available()) return;
     const opening = ++generation;
     clearTimeout(closeTimer);
+    lastOutsideTap = 0;
     overlay.classList.remove("is-closing");
     overlay.inert = false;
     overlay.removeAttribute("aria-hidden");
@@ -287,6 +315,7 @@ export default function documentBookmarks({ manager, labels, storage = {
     selecting = false; selected.clear(); editing = menu = null;
     overlay.hidden = false;
     document.body.append(overlay);
+    lockBackground();
     panel.getBoundingClientRect();
     document.addEventListener("keydown", onKeyDown, true);
     perform(render);
@@ -298,10 +327,16 @@ export default function documentBookmarks({ manager, labels, storage = {
     const view = viewFor(file);
     const key = keyFor(file);
     knownKeys.set(file, key);
-    try { store.add(key, view.state.doc.toString(), view.state.selection.main.head); open(); }
+    try { store.add(key, view.state.doc.toString(), bookmarkScrollPosition(view)); open(); }
     catch (error) { open(); fail(error); }
   }
-  overlay.onclick = (event) => { if (event.target === overlay) close(); };
+  function outsideTap() {
+    if (!currentKey) return;
+    const now = Date.now();
+    if (lastOutsideTap && now - lastOutsideTap <= 400) close();
+    else lastOutsideTap = now;
+  }
+  overlay.onclick = (event) => { if (event.target === overlay) outsideTap(); };
   manager.on("bookmark-document-changed", (file, changes) => perform(() => {
     const key = keyFor(file);
     if (!key) return;

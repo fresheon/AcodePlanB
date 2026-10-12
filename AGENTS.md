@@ -14,3 +14,7 @@ and folders. For each new modification task, copy the previous version's branch
 into exactly one new feature or fix branch and edit there. The previous branch
 is the backup; do not create an additional backup branch. Every delivered APK
 must pass signature verification as well as the final permission check.
+
+The user prioritizes conserving usage. Reuse the build pipeline, run focused
+tests for changed behavior, and avoid redundant broad checks or unnecessary
+tool calls. Keep progress messages brief and avoid frequent status polling.

@@ -163,11 +163,13 @@ export default function editorSettings() {
 		{
 			key: "fontSize",
 			text: strings["font size"],
-			value: values.fontSize,
+			value: Number.parseFloat(values.fontSize),
+			valueText: (value) => `${value}px`,
 			prompt: strings["font size"],
+			promptType: "number",
 			promptOptions: {
 				required: true,
-				match: config.FONT_SIZE,
+				test: (value) => /^\d+(?:\.\d+)?$/.test(String(value).trim()) && Number.isFinite(Number(value)) && Number(value) > 0,
 			},
 			info: strings["settings-info-editor-font-size"],
 			category: categories.textLayout,
@@ -433,6 +435,11 @@ export default function editorSettings() {
 	 * @param {string} value
 	 */
 	function callback(key, value) {
+		if (key === "fontSize") {
+			if (/^\d+(?:\.\d+)?$/.test(String(value).trim()) && Number(value) > 0 && Number.isFinite(Number(value)))
+				appSettings.update({ fontSize: `${Number(value)}px` });
+			return;
+		}
 		if (key === "cursorWidth") {
 			if (
 				String(value).trim() !== "" &&

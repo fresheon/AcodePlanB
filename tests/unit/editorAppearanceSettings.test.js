@@ -27,6 +27,18 @@ beforeEach(() => {
 });
 
 describe("editor appearance settings", () => {
+	it("accepts a numeric font size and stores the fixed px unit", () => {
+		mocks.value.fontSize = "18px";
+		const page = editorSettings();
+		const item = page.items.find((item) => item.key === "fontSize");
+		expect(item.value).toBe(18);
+		expect(item.promptType).toBe("number");
+		expect(item.valueText(18)).toBe("18px");
+		for (const value of ["20", "22.5"]) expect(item.promptOptions.test(value)).toBe(true);
+		for (const value of ["20px", "", "0", "-1", "Infinity"]) expect(item.promptOptions.test(value)).toBe(false);
+		page.callback("fontSize", "22.5");
+		expect(mocks.update).toHaveBeenCalledWith({ fontSize: "22.5px" });
+	});
 	it("exposes color pickers, spacing inputs, and line heights greater than two", () => {
 		const page = editorSettings();
 		for (const key of ["editorBackgroundColor", "editorForegroundColor", "editorSelectionColor", "editorCursorColor", "editorActiveLineColor"]) expect(page.items.find(item => item.key === key).color).toBe(true);

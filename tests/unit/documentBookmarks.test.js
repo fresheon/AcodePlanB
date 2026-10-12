@@ -140,7 +140,6 @@ describe("document bookmarks", () => {
     const { controller, file, click } = setup();
     controller.add(); click("全选"); click("删除", controller.overlay.querySelector("footer"));
     controller.overlay.querySelector(".editor-bookmark-confirm-overlay").click();
-    controller.overlay.querySelector(".editor-bookmark-confirm-overlay").click();
     await Promise.resolve();
     expect(controller.store.list(file.uri)).toHaveLength(1);
   });

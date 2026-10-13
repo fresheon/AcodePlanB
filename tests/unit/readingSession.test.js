@@ -46,6 +46,13 @@ describe("durable reading sessions", () => {
     stop(); measure = view.requestMeasure.mock.calls.at(-1)[0]; measure.write(measure.read());
     expect(file.__readingRestorePending).toBe(false); expect(view.scrollDOM.scrollTop).toBe(515);
   });
+  it("preserves the last measured anchor while layout is unavailable during an editor update", () => {
+    const file = { id: "one", type: "editor", loaded: true };
+    const view = viewAt(); persistReadingPosition(file, view);
+    view.coordsAtPos = () => { throw new Error("Reading layout during update"); };
+    persistReadingPosition(file, view);
+    expect(savedReadingPosition(file).from).toBe(80);
+  });
   it("ignores hidden editors rather than replacing their saved positions", () => {
     const view = viewAt(); view.scrollDOM.getBoundingClientRect = () => ({ height: 0, width: 0 });
     expect(captureReadingPosition(view)).toBeNull();

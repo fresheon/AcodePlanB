@@ -7,6 +7,7 @@ export function validReadingPosition(position) {
     Number.isFinite(position.offset) && Number.isFinite(position.left);
 }
 export function captureReadingPosition(view) {
+  try {
   if (!view?.state?.doc || !view.scrollDOM?.isConnected) return null;
   const box = view.scrollDOM.getBoundingClientRect();
   if (!box.height || !box.width) return null;
@@ -24,6 +25,10 @@ export function captureReadingPosition(view) {
   const rect = view.coordsAtPos(from);
   if (!rect) return null;
   return { from, offset: rect.top - box.top, left: view.scrollDOM.scrollLeft };
+  } catch {
+    // During a CodeMirror update, preserve the last measured anchor.
+    return null;
+  }
 }
 export function savedReadingPosition(file, storage = localStorage) {
   const saved = positions(storage)[file.id];

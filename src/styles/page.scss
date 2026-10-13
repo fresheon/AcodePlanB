@@ -23,6 +23,7 @@ body {
       &#root {
         &:not(.top-bar) {
           &.show-header {
+            #sidebar-toggler { display: none; }
             #header-toggler {
               opacity: 1;
               transform: translate3d(-110px, 0, 0);

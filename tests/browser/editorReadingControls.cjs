@@ -810,7 +810,9 @@ async function run() {
           const root=document.createElement("wc-page"); root.id="root"; root.className="primary show-header";
           const header=reading.control.bookmarkList.parentNode.cloneNode(true);
           for(const name of ["menu","play_arrow","more_vert"]) { const icon=document.createElement("span"); icon.className="icon "+name; header.append(icon); }
-          root.append(header); document.body.append(root); document.body.classList.add("fullscreen-mode");
+          root.append(header);
+          for(const id of ["sidebar-toggler","header-toggler"]) { const button=document.createElement("span"); button.id=id; button.className="floating icon"; root.append(button); }
+          document.body.append(root); document.body.classList.add("fullscreen-mode");
         });
         for(const viewport of [{width:320,height:732},{width:1280,height:800}]) {
           await page.setViewportSize(viewport);
@@ -819,6 +821,8 @@ async function run() {
             return [...header.querySelectorAll(".icon")].map(icon=>{const r=icon.getBoundingClientRect();return {display:getComputedStyle(icon).display,visible:r.width>0&&r.height>0&&r.left>=bounds.left&&r.right<=bounds.right+1&&r.top>=bounds.top&&r.bottom<=bounds.bottom+1};});
           });
           assert(toolbar.length>=8); for(const icon of toolbar) assert(icon.display!=="none"&&icon.visible,JSON.stringify(toolbar));
+          const overlap=await page.locator("#root").evaluate(root=>{const close=root.querySelector("#header-toggler").getBoundingClientRect(),header=root.querySelector("header").getBoundingClientRect();return {hidden:getComputedStyle(root.querySelector("#sidebar-toggler")).display==="none",separate:close.right<=header.left};});
+          assert(overlap.hidden&&overlap.separate,JSON.stringify(overlap));
         }
         await page.evaluate(()=>{document.querySelector("#root").remove();document.body.classList.remove("fullscreen-mode");});
 		console.log(

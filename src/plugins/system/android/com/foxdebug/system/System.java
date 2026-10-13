@@ -153,7 +153,7 @@ public class System extends CordovaPlugin {
     activity.runOnUiThread(() -> {
       View view = webView.getView();
       view.post(() -> {
-        if (!webView.isShowingCustomView()) view.setVisibility(View.VISIBLE);
+        if (!webView.isCustomViewShowing()) view.setVisibility(View.VISIBLE);
         view.requestLayout(); view.invalidate();
         androidx.core.view.ViewCompat.requestApplyInsets(view);
         updateNavigationBackground();

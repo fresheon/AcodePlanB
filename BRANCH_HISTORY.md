@@ -103,6 +103,7 @@
 - 分支：`fix/visual-profile-button-spacing`
 - 基于：`fix/profile-import-resume-display`（`886a9540fa53d68ad484857768bd81bfc4a847f0`）。
 - 修改：五个方案操作按钮之间的四处间距，在上一版自适应间距基础上均增加5px；保留方案框到删除按钮35px及横向滑动。
-- 系统选择器：源码确认 ACTION_OPEN_DOCUMENT 启动 Android 系统文件选择器，Acode 无权设置其窗口导航栏颜色；未把本次间距修改宣称为该问题修复，替代入口待用户决定。
-- 验证：待构建后补充。
-- APK：待补充。
+- 系统选择器：源码确认 ACTION_OPEN_DOCUMENT 启动 Android 系统文件选择器，Acode 无权设置其窗口导航栏颜色。用户明确选择保留系统选择器，仅修改按钮间距；本次不宣称修复该窗口的透明导航栏。
+- 验证：82 项针对性单元测试与类型检查通过；手机/平板宽度下实测四处按钮间距均增加5px，启动、方案导入导出和阅读浏览器回归通过；APK 签名与最终权限核验通过，无新增权限。
+- APK：[下载测试 APK 压缩包](https://github.com/fresheon/AcodePlanB/actions/runs/38447462536/artifacts/11839795688)（解压后安装）。
+- APK 源码提交：`1ca56d1e87becca4288fd1fcaefa16e67152fdf8`。

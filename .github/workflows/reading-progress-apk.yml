@@ -37,7 +37,7 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Unit tests and types
         run: |
-          npm test -- tests/unit/readingSession.test.js tests/unit/restoreFiles.test.js tests/unit/documentBookmarks.test.js tests/unit/bookmarkScrollbar.test.js tests/unit/editorReadingControls.test.js tests/unit/editorAppearanceSettings.test.js tests/unit/editorPageTurning.test.ts tests/unit/androidPermissions.test.js
+          npm test -- tests/unit/saveStateReading.test.js tests/unit/readingSession.test.js tests/unit/restoreFiles.test.js tests/unit/documentBookmarks.test.js tests/unit/bookmarkScrollbar.test.js tests/unit/editorReadingControls.test.js tests/unit/editorAppearanceSettings.test.js tests/unit/editorPageTurning.test.ts tests/unit/androidPermissions.test.js
           npm run typecheck
       - name: Prepare Cordova
         run: npm run setup

@@ -5,7 +5,7 @@ import { addedFolder } from "./openFolder";
 import appSettings from "./settings";
 
 export default () => {
-	if (!window.editorManager) return;
+	if (!window.editorManager || sessionStorage.getItem("isfilesRestored") !== "true") return;
 
 	const filesToSave = [];
 	const folders = [];

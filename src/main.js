@@ -678,6 +678,7 @@ async function loadApp() {
 	);
 	const folders = helpers.parseJSON(localStorage.folders);
 	const files = helpers.parseJSON(localStorage.files) || [];
+	sessionStorage.setItem("isfilesRestored", "false");
 	const editorManager = await EditorManager($header, $main);
 	const readingControls = editorReadingControls({
 		manager: editorManager,

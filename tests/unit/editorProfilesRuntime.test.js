@@ -8,7 +8,7 @@ it("imports without traversing settings dependencies and initializes only with t
   const fonts = { injectFontFace: vi.fn() };
   window.cordova = { exec: vi.fn(resolve => resolve("native-process")) };
   const manager = await runtime.initializeEditorProfiles({ settings, fonts });
-  expect(settings.on).toHaveBeenCalledTimes(19);
+  expect(settings.on).toHaveBeenCalledTimes(26);
   expect(manager.current).toBeNull();
   expect(await runtime.initializeEditorProfiles({ settings, fonts })).toBe(manager);
   manager.dispose(); delete window.cordova;

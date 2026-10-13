@@ -29,14 +29,14 @@ const { chromium } = require("playwright");
     await button("保存").tap(); await page.getByRole("textbox", { name: "方案名称" }).fill("方案A"); await page.getByRole("dialog").getByRole("button", { name: "确定", exact: true }).tap();
     assert.equal(await choose.locator("option:checked").textContent(), "方案A");
     await page.evaluate(() => profiles.settings.update({ fontSize: "24px", editorPaddingTop: 47 }));
-    assert.equal(await choose.locator("option:checked").textContent(), "临时方案，尽快保存");
+    assert.equal(await choose.locator("option:checked").textContent(), "*未保存-方案A");
     await button("保存").tap(); assert.equal(await page.getByRole("dialog").count(), 0);
     assert.equal(await choose.locator("option:checked").textContent(), "方案A");
     await button("另存为").tap(); await page.getByRole("textbox").fill("方案A"); await page.getByRole("dialog").getByRole("button", { name: "确定", exact: true }).tap();
     assert.equal(await page.getByRole("alert").textContent(), "名称不能和已有方案相同");
     await page.getByRole("textbox").fill("方案B"); await page.getByRole("dialog").getByRole("button", { name: "确定", exact: true }).tap();
     await page.evaluate(() => profiles.settings.update({ fontSize: "30px" }));
-    await page.evaluate(() => profiles.restart("one")); assert.equal(await choose.locator("option:checked").textContent(), "临时方案，尽快保存");
+    await page.evaluate(() => profiles.restart("one")); assert.equal(await choose.locator("option:checked").textContent(), "*未保存-方案B");
     await page.evaluate(() => profiles.restart("two")); assert.equal(await choose.locator("option:checked").textContent(), "方案A"); assert.equal(await page.evaluate(() => profiles.settings.value.fontSize), "24px");
     await button("导出").tap(); assert.deepEqual(await page.getByRole("dialog").getByRole("button").allTextContents(), ["保存当前", "保存所有", "取消"]);
     await page.getByRole("dialog").getByRole("button", { name: "取消", exact: true }).tap(); assert.equal(await page.evaluate(() => profiles.folderVisits), 0);
@@ -45,13 +45,27 @@ const { chromium } = require("playwright");
     let exported = await page.evaluate(() => profiles.exports); assert.equal(exported[0][1], "untouched"); assert.equal(JSON.parse(exported[1][1]).profiles.length, 1); assert.equal(exported[1][0], "chosen/AcodeEditorSetting1");
     await button("导出").tap(); await page.getByRole("dialog").getByRole("button", { name: "保存所有", exact: true }).tap(); await page.waitForFunction(() => profiles.folderVisits === 2);
     exported = await page.evaluate(() => profiles.exports); assert.equal(JSON.parse(exported[2][1]).profiles.length, 2); assert.equal(exported[2][0], "chosen/AcodeEditorSetting2");
-    await button("删除").tap(); await page.getByRole("dialog").getByRole("button", { name: "取消", exact: true }).tap(); assert.equal(await choose.locator("option:checked").textContent(), "方案A");
+    await button("删除").tap();
+    const deletion = await page.getByRole("dialog").evaluate(dialog => {
+      const buttons = [...dialog.querySelectorAll("button")]; const first = buttons[0].getBoundingClientRect(), second = buttons[1].getBoundingClientRect();
+      const chars = buttons[0].querySelectorAll(".editor-profile-button-caption > span");
+      return { width: dialog.getBoundingClientRect().width, gap: second.left - first.right, buttonWidth: first.width, characterGap: chars[1].getBoundingClientRect().left - chars[0].getBoundingClientRect().right };
+    });
+    assert(Math.abs(deletion.width - Math.min(412*.85,380)*2/3) < 1, JSON.stringify(deletion));
+    assert.equal(deletion.gap, 50); assert(Math.abs(deletion.buttonWidth - (28+12)*4/3) < 1); assert.equal(deletion.characterGap,14);
+    await page.getByRole("dialog").getByRole("button", { name: "取消", exact: true }).tap(); assert.equal(await choose.locator("option:checked").textContent(), "方案A");
     await button("删除").tap(); await page.getByRole("dialog").getByRole("button", { name: "删除", exact: true }).tap(); assert.equal(await choose.locator("option:checked").textContent(), "方案B");
     await button("另存为").tap(); await page.getByRole("dialog").getByRole("button", { name: "取消", exact: true }).tap(); assert.equal(await choose.locator("option").count(), 2);
     for (const viewport of [{width:320,height:732}, {width:1280,height:800}]) {
       await page.setViewportSize(viewport);
-      const bounds = await page.locator(".editor-profiles-row").evaluate(row => ({ select: row.querySelector("select").getBoundingClientRect().width, right: Math.max(...[...row.querySelectorAll("button")].map(button => button.getBoundingClientRect().right)) }));
-      assert.equal(bounds.select, viewport.width/2); assert(bounds.right <= viewport.width, JSON.stringify(bounds));
+      const bounds = await page.locator(".editor-profiles-row").evaluate(row => {
+        row.scrollLeft = 0;
+        const select = row.querySelector("select").getBoundingClientRect(); const buttons = [...row.querySelectorAll("button")].map(button => button.getBoundingClientRect());
+        return { select: select.width, gaps: [buttons[0].left-select.right, ...buttons.slice(1).map((button,index) => button.left-buttons[index].right)], width: row.clientWidth, scrollWidth: row.scrollWidth };
+      });
+      assert.equal(bounds.select, viewport.width/2); for(const gap of bounds.gaps) assert.equal(gap,35);
+      if(viewport.width===320) assert(bounds.scrollWidth > bounds.width);
+      await button("导出").tap(); await page.getByRole("dialog").getByRole("button", {name:"取消",exact:true}).tap();
     }
     console.log("Editor profiles browser checks passed: real naming/cancel/duplicate/save/save-as/delete/export controls, process-scoped temporary settings, JSON exports and phone/tablet layout.");
   } finally { await browser?.close(); fs.rmSync(temporary, { recursive: true, force: true }); }

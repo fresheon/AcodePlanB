@@ -34,6 +34,7 @@ import _addMenuHome from "./add-menu-home.hbs";
 import _template from "./fileBrowser.hbs";
 import _list from "./list.hbs";
 import util from "./util";
+import { pickSystemFolder, systemFolderButton } from "./systemFolder";
 
 /**
  * @typedef {{url: String, name: String}} Location
@@ -191,6 +192,7 @@ function FileBrowserInclude(mode, info, doesOpenLast = true) {
 		$page.body = $content;
 		$page.header.append($search);
 		if (IS_FILE_MODE) $page.header.append($selectDocument);
+		if (IS_FOLDER_MODE) $page.header.append(systemFolderButton(strings["select folder"], selectSystemFolder));
 		$page.header.append(
 			$pasteToggler,
 			$selectionModeToggler,
@@ -688,6 +690,18 @@ function FileBrowserInclude(mode, info, doesOpenLast = true) {
 			);
 		}
 
+		async function selectSystemFolder() {
+			checkFiles.check = false;
+			try {
+				const folder = await pickSystemFolder(sdcard);
+				if (!folder) return;
+				const existing = storageList.find(storage => (storage.url || storage.uri) === folder.url);
+				updateStorage({ ...folder, type: "dir", storageType: "permission", uuid: existing?.uuid }, false);
+				if (IS_FOLDER_MODE) { resolve(folder); $page.hide(); }
+				else navigate(folder.url, folder.name);
+			} catch (error) { helpers.error(error); }
+		}
+
 		/**
 		 * @param {string} url
 		 */
@@ -984,6 +998,7 @@ function FileBrowserInclude(mode, info, doesOpenLast = true) {
 			const uuid = $el.dataset.uuid;
 			const type = $el.dataset.type;
 			const storageType = $el.dataset.storageType;
+			if (storageType === "system-folder-picker" && !isContextMenu) { selectSystemFolder(); return; }
 			const home = $el.dataset.home;
 			const isDir = ["dir", "directory", "folder"].includes(type);
 
@@ -1379,6 +1394,10 @@ function FileBrowserInclude(mode, info, doesOpenLast = true) {
 						uuid: "internal-storage",
 					},
 				);
+			} else {
+				util.pushFolder(allStorages, "Internal storage", "", {
+					uuid: "internal-storage-picker", storageType: "system-folder-picker",
+				});
 			}
 
 			try {

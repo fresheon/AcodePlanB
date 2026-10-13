@@ -1,9 +1,10 @@
-import { TEMP_PROFILE_ID, TEMP_PROFILE_NAME } from "../lib/editorProfiles";
+import { TEMP_PROFILE_ID } from "../lib/editorProfiles";
 
-export function editorProfileDialog({ title, input = false, choices, validate, actionStack }) {
+export function editorProfileDialog({ title, input = false, choices, validate, actionStack, variant }) {
   return new Promise(resolve => {
     const overlay = document.createElement("div"); overlay.className = "editor-profile-dialog-overlay";
     const form = document.createElement("form"); form.className = "editor-profile-dialog"; form.setAttribute("role", "dialog");
+    if (variant === "delete") form.classList.add("editor-profile-delete-dialog");
     form.setAttribute("aria-modal", "true"); form.setAttribute("aria-label", title);
     const label = document.createElement("label"); label.textContent = title;
     const field = document.createElement("input"); field.type = "text"; field.setAttribute("aria-label", title); field.autocomplete = "off";
@@ -15,6 +16,11 @@ export function editorProfileDialog({ title, input = false, choices, validate, a
     function escape(event) { if (event.key === "Escape") { event.preventDefault(); finish(null); } }
     for (const [text, value] of choices) {
       const button = document.createElement("button"); button.type = "button"; button.textContent = text;
+      if (variant === "delete") {
+        const caption = document.createElement("span"); caption.className = "editor-profile-button-caption";
+        for (const char of text) { const character = document.createElement("span"); character.textContent = char; caption.append(character); }
+        button.replaceChildren(caption); button.setAttribute("aria-label", text);
+      }
       button.onclick = () => {
         if (input && value !== null) {
           const message = validate?.(field.value); if (message) { error.textContent = message; field.focus(); return; }
@@ -39,7 +45,7 @@ export default function editorProfilesRow({ manager, dialog = editorProfileDialo
   function render() {
     const state = manager.state;
     select.replaceChildren(new Option("", ""));
-    if (state.temporary) select.add(new Option(TEMP_PROFILE_NAME, TEMP_PROFILE_ID));
+    if (state.temporary) select.add(new Option(state.temporary.name, TEMP_PROFILE_ID));
     for (const profile of state.profiles) select.add(new Option(profile.name, profile.id));
     select.value = state.active;
     select.disabled = busy;
@@ -59,7 +65,7 @@ export default function editorProfilesRow({ manager, dialog = editorProfileDialo
   }
   const handlers = {
     delete: async () => {
-      if (await dialog({ title: `删除方案“${manager.current.name}”？`, choices: [["取消", false], ["删除", true]] })) { await manager.removeCurrent(); refresh(); }
+      if (await dialog({ title: `删除方案“${manager.current.name}”？`, variant: "delete", choices: [["取消", false], ["删除", true]] })) { await manager.removeCurrent(); refresh(); }
     },
     save: async () => { if (manager.canOverwrite) manager.save(); else await nameAndSave(); },
     saveAs: nameAndSave,

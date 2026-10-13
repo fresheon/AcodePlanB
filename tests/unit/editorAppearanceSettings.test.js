@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock("lib/settings", () => ({ default: mocks }));
 vi.mock("lib/fonts", () => ({ default: { getNames: () => [], setFont: vi.fn() } }));
 vi.mock("lib/config", () => ({ default: { FONT_SIZE: /px$/ } }));
-vi.mock("../../src/settings/scrollSettings", () => ({ default: vi.fn() }));
 vi.mock("components/settingsPage", () => ({ default: (title, items, callback) => {
 	const page = { items, callback, show: vi.fn(), hide: vi.fn() };
 	mocks.pages.push(page);
@@ -18,6 +17,7 @@ vi.mock("components/settingsPage", () => ({ default: (title, items, callback) =>
 } }));
 import { editorProfileKeys } from "lib/editorProfiles";
 import editorSettings from "../../src/settings/editorSettings";
+import scrollSettings from "../../src/settings/scrollSettings";
 
 beforeEach(() => {
 	vi.stubGlobal("strings", new Proxy({}, { get: (_, key) => String(key) }));
@@ -28,15 +28,17 @@ beforeEach(() => {
 });
 
 describe("editor appearance settings", () => {
-	it("distinguishes font presentation and includes exactly all three profile categories", () => {
+	it("distinguishes font presentation and includes all four profile categories including scrolling subpage", () => {
 		const page = editorSettings();
 		const font = page.items.find(item => item.key === "editorFont").category;
 		const layout = page.items.find(item => item.key === "editorBackgroundColor").category;
 		const cursor = page.items.find(item => item.key === "cursorWidth").category;
 		expect(font).toBe("settings-category-font-presentation");
 		expect(font).not.toBe(layout);
-		const keys = page.items.filter(item => [font, layout, cursor].includes(item.category) && item.key !== "resetEditorAppearance").map(item => item.key).sort();
-		expect(keys).toEqual([...editorProfileKeys].sort());
+		const scrolling = page.items.find(item => item.key === "editorPageTurning").category;
+		const keys = page.items.filter(item => [font, layout, cursor, scrolling].includes(item.category) && !["resetEditorAppearance", "scroll-settings"].includes(item.key)).map(item => item.key);
+		keys.push(...scrollSettings().items.map(item => item.key));
+		expect(keys.sort()).toEqual([...editorProfileKeys].sort());
 	});
 
 	it("accepts a numeric font size and stores the fixed px unit", () => {

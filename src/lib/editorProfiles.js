@@ -6,6 +6,8 @@ export const editorProfileKeys = [
   "editorFont", "fontSize", "lineHeight", "textWrap", "wrappingIndent",
   "editorActiveLineColor", "editorSelectionColor", "editorCursorColor", "cursorWidth",
   "showShareButton", "shiftClickSelection", "rtlText",
+  "editorPageTurning", "editorPageSwipeDistance", "editorPageLockVerticalScroll",
+  "scrollbarSize", "scrollbarHeight", "scrollPastEnd", "leftMargin",
 ];
 const storageKey = "acode-editor-profiles-v1";
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -16,6 +18,15 @@ export function createEditorProfileManager({ settings, storage = localStorage, p
   let state;
   try { state = JSON.parse(storage.getItem(storageKey) || "null"); } catch { state = null; }
   if (!state || !Array.isArray(state.profiles)) state = { profiles: [], active: "", temporary: null };
+  for (const profile of state.profiles) profile.settings = profileSettings(profile.settings || {}, { ...defaults, ...settings.value });
+  const temporaryName = baseId => {
+    const base = state.profiles.find(profile => profile.id === baseId);
+    return base ? `*未保存-${base.name}` : TEMP_PROFILE_NAME;
+  };
+  if (state.temporary) {
+    state.temporary.name = temporaryName(state.temporary.baseId);
+    state.temporary.settings = profileSettings(state.temporary.settings || {}, { ...defaults, ...settings.value });
+  }
   let applying = 0, applyingValues = null;
   const listeners = new Set();
   const write = () => storage.setItem(storageKey, JSON.stringify(state));
@@ -33,7 +44,7 @@ export function createEditorProfileManager({ settings, storage = localStorage, p
   const markChanged = () => {
     if (applying && editorProfileKeys.every(key => settings.value[key] === applyingValues?.[key])) return;
     const origin = state.active === TEMP_PROFILE_ID ? state.temporary?.baseId : current()?.id;
-    state.temporary = { id: TEMP_PROFILE_ID, name: TEMP_PROFILE_NAME, baseId: origin || null,
+    state.temporary = { id: TEMP_PROFILE_ID, name: temporaryName(origin), baseId: origin || null,
       processToken, settings: profileSettings(settings.value, defaults) };
     state.active = TEMP_PROFILE_ID;
     write(); notify();
@@ -90,7 +101,7 @@ export function createEditorProfileManager({ settings, storage = localStorage, p
       } else {
         const id = state.active;
         state.profiles = state.profiles.filter(p => p.id !== id);
-        if (state.temporary?.baseId === id) state.temporary.baseId = null;
+        if (state.temporary?.baseId === id) { state.temporary.baseId = null; state.temporary.name = TEMP_PROFILE_NAME; }
         state.active = state.profiles[0]?.id || "";
       }
       write(); await apply(current()?.settings || defaults); notify();

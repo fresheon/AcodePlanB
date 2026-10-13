@@ -11,6 +11,23 @@ export function fakeSettings() {
 const setup = token => { const settings = fakeSettings(); return { settings, manager: createEditorProfileManager({ settings, processToken: token || "one", defaults: { fontSize: "12px" } }) }; };
 beforeEach(() => localStorage.clear());
 describe("editor layout profiles", () => {
+  it("saves/applies every scrolling setting and labels edits to a named profile", async () => {
+    const { settings, manager } = setup(); await manager.start();
+    const scrolling = { editorPageTurning: true, editorPageSwipeDistance: 77, editorPageLockVerticalScroll: true, scrollbarSize: 15, scrollbarHeight: 60, scrollPastEnd: "full", leftMargin: 35 };
+    await settings.update(scrolling); expect(manager.current.name).toBe(TEMP_PROFILE_NAME);
+    const a = manager.save("方案A");
+    await settings.update({ scrollbarHeight: 20 }); expect(manager.current.name).toBe("*未保存-方案A");
+    expect(manager.current.baseId).toBe(a.id); manager.save(); expect(manager.current.name).toBe("方案A");
+    await settings.update({ editorPageTurning: false }); await manager.select(a.id);
+    expect(settings.value).toMatchObject({ ...scrolling, scrollbarHeight: 20 });
+  });
+  it("upgrades older profiles with current scrolling values without resetting them", async () => {
+    localStorage.setItem("acode-editor-profiles-v1", JSON.stringify({ profiles: [{ id: "a", name: "方案A", settings: { fontSize: "24px" } }], active: "a", temporary: null }));
+    const settings = fakeSettings(); settings.value.scrollbarHeight = 60;
+    const manager = createEditorProfileManager({ settings, processToken: "one", defaults: { scrollbarHeight: 50 } });
+    await manager.start(); expect(settings.value.scrollbarHeight).toBe(60); expect(settings.value.fontSize).toBe("24px");
+    expect(Object.keys(manager.current.settings)).toHaveLength(26);
+  });
   it("starts blank and creates only one temporary profile for all changes", async () => {
     const { settings, manager } = setup(); await manager.start();
     expect(manager.current).toBeNull();
@@ -70,7 +87,7 @@ describe("editor layout profiles", () => {
     const { settings, manager } = setup(); await manager.start(); const a = manager.save("A");
     await settings.update({ fontSize: "28px" }); await manager.select(a.id);
     expect(manager.state.temporary.settings.fontSize).toBe("28px");
-    expect(manager.exportData(true).profiles.map(p => p.name)).toEqual([TEMP_PROFILE_NAME, "A"]);
+    expect(manager.exportData(true).profiles.map(p => p.name)).toEqual(["*未保存-A", "A"]);
     expect(manager.exportData(false).profiles).toHaveLength(1);
     await manager.select(""); expect(() => manager.exportData()).toThrow();
   });

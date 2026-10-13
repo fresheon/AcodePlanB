@@ -127,6 +127,7 @@
 	"copy command is not supported by ftp.": "FTP 不支持复制操作.",
 	"support title": "支持 Acode",
 	"fullscreen": "全屏",
+	"settings-app-floating-toolbar": "打开浮动工具栏",
 	"animation": "动画效果",
 	"backup": "备份",
 	"restore": "恢复",

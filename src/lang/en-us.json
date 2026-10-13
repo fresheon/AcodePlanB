@@ -138,6 +138,7 @@
 	"copy command is not supported by ftp.": "Copy command is not supported by FTP.",
 	"support title": "Support Acode",
 	"fullscreen": "Fullscreen",
+	"settings-app-floating-toolbar": "Open floating toolbar",
 	"animation": "Animation",
 	"backup": "Backup",
 	"restore": "Restore",

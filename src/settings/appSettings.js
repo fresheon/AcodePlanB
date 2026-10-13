@@ -60,7 +60,7 @@ export default function otherSettings() {
 		},
 		{
 			key: "fullscreen",
-			text: strings.fullscreen.capitalize(),
+			text: strings["settings-app-floating-toolbar"] || strings.fullscreen.capitalize(),
 			checkbox: values.fullscreen,
 			info: strings["settings-info-app-fullscreen"],
 			category: categories.interface,

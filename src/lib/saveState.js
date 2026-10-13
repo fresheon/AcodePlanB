@@ -1,3 +1,4 @@
+import { captureReadingPosition } from "./readingSession";
 import { getAllFolds, getScrollPosition, getSelection } from "cm/editorUtils";
 import config from "./config";
 import { addedFolder } from "./openFolder";
@@ -14,7 +15,7 @@ export default () => {
 	files.forEach((file) => {
 		if (file.type !== "editor") return;
 		if (file.id === config.DEFAULT_FILE_SESSION) return;
-		if (file.persistInSession === false) return;
+
 
 		// Selection per file:
 		// - Active file uses live EditorView selection
@@ -57,6 +58,11 @@ export default () => {
 				typeof file.lastScrollLeft === "number" ? file.lastScrollLeft : 0;
 		}
 
+		const pane = editorManager.getFilePane?.(file);
+		const liveView = pane?.activeFile === file ? pane.editor : (activeFile?.id === file.id ? editor : null);
+		if (liveView && file.loaded && !file.loading && !file.__readingRestorePending) {
+			file.readingPosition = captureReadingPosition(liveView) || file.readingPosition;
+		}
 		const fileJson = {
 			id: file.id,
 			uri: file.uri,
@@ -76,14 +82,14 @@ export default () => {
 			cursorPos,
 			scrollTop,
 			scrollLeft,
-			editable: file.editable,
+			editable: false,
+			readingPosition: file.readingPosition,
 			encoding: file.encoding,
 			render: activeFile?.id === file.id,
 			folds: file.restoredFolds ?? getAllFolds(file.session),
 		};
 
-		if (settings.rememberFiles || fileJson.isUnsaved)
-			filesToSave.push(fileJson);
+		filesToSave.push(fileJson);
 	});
 
 	if (settings.rememberFolders) {

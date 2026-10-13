@@ -1,3 +1,4 @@
+import { persistReadingPosition, restoreReadingPosition } from "./readingSession";
 import sidebarApps from "sidebarApps";
 import { indentUnit, language as languageFacet } from "@codemirror/language";
 import { search } from "@codemirror/search";
@@ -134,6 +135,7 @@ async function EditorManager($header, $body) {
 	let scrollbarScrollLockUntil = 0;
 	let scrollbarScrollLockTop = null;
 	let scrollbarScrollLockLeft = null;
+	let cancelReadingRestore = null;
 	let scrollRestoreFrame = 0;
 	let scrollRestoreNestedFrame = 0;
 	let scrollRestoreTimeout = 0;
@@ -3062,6 +3064,14 @@ async function EditorManager($header, $body) {
 	function restoreFileScrollPosition(file) {
 		cancelPendingScrollRestore();
 		if (!file || file.type !== "editor") return;
+		if (file.readingPosition) {
+			const view = editor;
+			suppressCursorReveal(450);
+			cancelReadingRestore = restoreReadingPosition(view, file,
+				() => manager.activeFile?.id === file.id && editor === view,
+				() => { lastScrollTop = view.scrollDOM.scrollTop; lastScrollLeft = view.scrollDOM.scrollLeft; });
+			if (cancelReadingRestore) return;
+		}
 		const hasTop = typeof file.lastScrollTop === "number";
 		const hasLeft = typeof file.lastScrollLeft === "number";
 		if (!hasTop && !hasLeft) return;
@@ -3105,6 +3115,8 @@ async function EditorManager($header, $body) {
 	}
 
 	function cancelPendingScrollRestore() {
+		cancelReadingRestore?.();
+		cancelReadingRestore = null;
 		if (scrollRestoreFrame) {
 			cancelAnimationFrame(scrollRestoreFrame);
 			scrollRestoreFrame = 0;
@@ -4354,6 +4366,7 @@ async function EditorManager($header, $body) {
 		}
 
 		function handleEditorScroll() {
+			if (sessionStorage.getItem("isfilesRestored") === "true") persistReadingPosition(pane.activeFile, editor);
 			if (pane !== activePane) return;
 			if (!scroller) return;
 			if (restoreScrollbarScrollLock()) return;
@@ -5066,6 +5079,7 @@ async function EditorManager($header, $body) {
 		const prev = paneActiveFile;
 		if (prev?.type === "editor" && prev.loaded && !prev.loading) {
 			prev.session = getRawEditorState(pane.editor.state);
+			persistReadingPosition(prev, pane.editor);
 			prev.lastScrollTop = pane.editor.scrollDOM?.scrollTop || 0;
 			prev.lastScrollLeft = pane.editor.scrollDOM?.scrollLeft || 0;
 			window.setTimeout(() => {

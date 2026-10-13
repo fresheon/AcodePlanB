@@ -1,7 +1,7 @@
 name: Reading progress test APK
 on:
   push:
-    branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions, feat/document-bookmarks, fix/bookmark-scroll-layout, fix/bookmark-thumb-status-background, fix/fullscreen-padding-bookmark-priority, fix/fullscreen-persistent-top-space]
+    branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions, feat/document-bookmarks, fix/bookmark-scroll-layout, fix/bookmark-thumb-status-background, fix/fullscreen-padding-bookmark-priority, fix/fullscreen-persistent-top-space, fix/persistent-reading-session]
 permissions:
   contents: read
 jobs:
@@ -34,7 +34,7 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Unit tests and types
         run: |
-          npm test -- tests/unit/documentBookmarks.test.js tests/unit/bookmarkScrollbar.test.js tests/unit/editorReadingControls.test.js tests/unit/editorAppearanceSettings.test.js tests/unit/editorPageTurning.test.ts tests/unit/androidPermissions.test.js
+          npm test -- tests/unit/readingSession.test.js tests/unit/restoreFiles.test.js tests/unit/documentBookmarks.test.js tests/unit/bookmarkScrollbar.test.js tests/unit/editorReadingControls.test.js tests/unit/editorAppearanceSettings.test.js tests/unit/editorPageTurning.test.ts tests/unit/androidPermissions.test.js
           npm run typecheck
       - name: Prepare Cordova
         run: npm run setup

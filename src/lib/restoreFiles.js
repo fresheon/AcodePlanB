@@ -1,3 +1,4 @@
+import { savedReadingPosition } from "./readingSession";
 import EditorFile from "./editorFile";
 
 /**
@@ -15,9 +16,14 @@ export default async function restoreFiles(files) {
 			...file,
 			render,
 			emitUpdate: false,
+			editable: false,
+			silentSessionRestore: true,
+			readingPosition: savedReadingPosition(file),
 		};
 		const restoredFile = new EditorFile(file.filename, options);
-		const load = Promise.resolve(restoredFile.load?.());
+		const load = Promise.resolve(restoredFile.load?.()).catch(() => {
+			return restoredFile.remove?.(true, { ignorePinned: true });
+		});
 
 		if (file.uri && !/^(?:file|content):/i.test(file.uri)) {
 			void load.catch((error) => {

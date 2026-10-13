@@ -645,6 +645,8 @@ export default class EditorFile {
 		}
 
 		this.#uri = options?.uri;
+		this.readingPosition = options?.readingPosition || null;
+		this.silentSessionRestore = options?.silentSessionRestore === true;
 
 		if (this.#id) doesExists = getFile(this.#id, "id");
 		else if (this.#uri) doesExists = getFile(this.#uri, "uri");
@@ -1849,6 +1851,14 @@ export default class EditorFile {
 		let started = false;
 
 		try {
+			// A restored cached document must not resurrect a moved/deleted path.
+			if (this.silentSessionRestore && this.uri && hasProvider(this.uri)) {
+				const source = fsOperation(this.uri);
+				if (source.exists && !(await source.exists())) {
+					await this.remove(true, { ignorePinned: true });
+					return;
+				}
+			}
 			const cacheFs = fsOperation(this.cacheFile);
 			const cacheExists = await cacheFs.exists();
 			if (!this.#tab) return;
@@ -1928,6 +1938,7 @@ export default class EditorFile {
 			} else {
 				this.markLoaded({ mtime: loadedMtime, isUnsaved, savedDoc });
 			}
+			this.silentSessionRestore = false;
 			this.#loadOptions = null;
 			this.markChanged = true;
 			this.loaded = true;
@@ -1947,6 +1958,10 @@ export default class EditorFile {
 			}, 0);
 		} catch (error) {
 			if (!this.#tab) return;
+			if (this.silentSessionRestore) {
+				await this.remove(true, { ignorePinned: true });
+				return;
+			}
 			this.#emit("loaderror", createFileEvent(this));
 			this.remove(false, { ignorePinned: true });
 			toast(`Unable to load: ${this.filename}`);

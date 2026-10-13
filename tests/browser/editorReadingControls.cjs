@@ -759,6 +759,16 @@ async function run() {
     }
     await page.screenshot({ path: "/tmp/acode-status-preview.png" });
     await page.touchscreen.tap(392, 20);
+
+    const restart = await page.evaluate(() => window.testReadingRestart());
+    assert.deepEqual(restart.readOnly, [true, true]);
+    assert.deepEqual(restart.fullscreen, [false, false]);
+    for (let i = 0; i < 2; i++) {
+      assert.equal(restart.after[i].from, restart.before[i].from, JSON.stringify(restart));
+      assert(Math.abs(restart.after[i].offset - restart.before[i].offset) < 1, JSON.stringify(restart));
+    }
+    assert.equal(restart.closedPosition, null);
+    assert.equal(restart.reopenedTop, 0);
 		console.log(
 			"Browser regression passed: real toolbar hit testing, both touch buttons, fullscreen exit, read-only selection guard, scrolling, editable text input, paging swipes, tap paging and paging disable.",
 		);

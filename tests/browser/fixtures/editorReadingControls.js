@@ -130,3 +130,52 @@ window.setupReading = () => {
 		},
 	};
 };
+
+import { captureReadingPosition, persistReadingPosition, savedReadingPosition, forgetReadingPosition, restoreReadingPosition } from "../../../src/lib/readingSession.js";
+window.testReadingRestart = async () => {
+  const data = new Map();
+  const storage = { getItem: key => data.get(key) || null, setItem: (key, value) => data.set(key, value) };
+  const files = [0, 1].map(i => ({ id: `restart-${i}`, uri: `file:///restart-${i}.txt`, type: "editor", loaded: true }));
+  storage.setItem("files", JSON.stringify(files));
+  const docs = files.map((_, i) => Array.from({ length: 250 }, (_, n) => `document ${i} line ${n} ` + "wrapped text sample ".repeat(5)).join("\n"));
+  const wait = () => new Promise(resolve => setTimeout(resolve, 180));
+  function create(doc, fullscreen) {
+    const host = document.createElement("div");
+    host.className = fullscreen ? "editor-pane editor-content-fullscreen" : "editor-pane";
+    if (!fullscreen) host.style.cssText = "position:fixed;left:0;top:80px;width:412px;height:300px;z-index:20000";
+    document.body.append(host);
+    const view = new EditorView({ doc, parent: host, extensions: [
+      createEditorReadOnlyExtension(true), EditorView.lineWrapping,
+      editorAppearance({ editorPaddingTop: 30 }),
+      EditorView.theme({ "&": { height: "100%", fontSize: "17px" }, ".cm-content": { lineHeight: "1.6" }, ".cm-scroller": { overflow: "auto" } }),
+    ] });
+    return { host, view };
+  }
+  const before = [];
+  for (let i = 0; i < files.length; i++) {
+    const { host, view } = create(docs[i], i === 1);
+    await wait();
+    view.dispatch({ effects: EditorView.scrollIntoView(view.state.doc.line(60 + i * 70).from, { y: "start" }) });
+    await wait(); view.scrollDOM.scrollTop += 5; await wait();
+    persistReadingPosition(files[i], view, storage);
+    before.push(captureReadingPosition(view));
+    // Destroy directly: deliberately invoke no pause, pagehide or save-state.
+    view.destroy(); host.remove();
+  }
+  const after = [], readOnly = [], fullscreen = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = { ...files[i], readingPosition: savedReadingPosition(files[i], storage) };
+    const { host, view } = create(docs[i], false);
+    await wait();
+    await new Promise(resolve => restoreReadingPosition(view, file, () => true, resolve));
+    await wait();
+    after.push(captureReadingPosition(view)); readOnly.push(view.state.readOnly); fullscreen.push(host.classList.contains("editor-content-fullscreen"));
+    view.destroy(); host.remove();
+  }
+  forgetReadingPosition(files[0], storage);
+  const closedPosition = savedReadingPosition({ id: files[0].id, uri: files[0].uri }, storage);
+  const reopened = create(docs[0], false); await wait();
+  const reopenedTop = reopened.view.scrollDOM.scrollTop;
+  reopened.view.destroy(); reopened.host.remove();
+  return { before, after, readOnly, fullscreen, closedPosition, reopenedTop };
+};

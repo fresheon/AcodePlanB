@@ -1,3 +1,4 @@
+import { forgetReadingPosition } from "./lib/readingSession";
 import "core-js/stable";
 import "html-tag-js/dist/polyfill";
 
@@ -99,6 +100,10 @@ loginEvents.addListener(onLogin);
 window.addEventListener("resize", windowResize);
 document.addEventListener("pause", pauseHandler);
 document.addEventListener("resume", resumeHandler);
+document.addEventListener("visibilitychange", () => {
+	if (document.hidden) window.acode?.exec("save-state");
+});
+window.addEventListener("pagehide", () => window.acode?.exec("save-state"));
 document.addEventListener("keydown", keyboardHandler);
 document.addEventListener("deviceready", onDeviceReady);
 document.addEventListener("backbutton", backButtonHandler);
@@ -743,6 +748,7 @@ async function loadApp() {
 	sidebarApps.init($sidebar);
 	await sidebarApps.loadApps();
 	editorManager.onupdate = onEditorUpdate;
+	editorManager.on("remove-file", file => forgetReadingPosition(file));
 	root.on("show", mainPageOnShow);
 	app.addEventListener("click", onClickApp);
 	editorManager.on("rename-file", onFileUpdate);
@@ -1025,8 +1031,8 @@ function menuButtonHandler() {
 
 async function pauseHandler() {
 	const { acode } = window;
-	await window.editorManager?.flushCacheWrites?.();
 	acode?.exec("save-state");
+	await window.editorManager?.flushCacheWrites?.();
 }
 
 function resumeHandler() {

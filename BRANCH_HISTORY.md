@@ -1,0 +1,15 @@
+# AcodePlanB 分支修改记录
+
+从本次修改开始，按递增编号追加到同一文件；保留已有记录。
+时间采用北京时间（Asia/Shanghai）。上一分支作为备份，不额外新建备份分支。
+
+## 001 — 恢复所有打开文件的最后阅读位置（2026-10-13）
+
+- 分支：`fix/persistent-reading-session`
+- 基于：`fix/fullscreen-persistent-top-space`（`79541bdc776d725c079128e171c2d7639e4d646b`）
+- 问题：正常关闭后恢复位置不准确；后台杀进程后回到第一页。
+- 修改：滚动时同步保存每个文件的顶部文字位置及偏移，不依赖退出回调；恢复位置以文字锚点为准，适配全屏与非全屏布局变化。
+- 行为：之前打开的文件重启后均以非全屏、只读模式恢复；手动关闭文件清除阅读位置，下次手动打开从头开始；路径失效的文件静默跳过，包括有缓存的文件。
+- 验证：针对性单元测试、浏览器重建两个文件的阅读位置及模式检查、APK 签名有效性和最终权限检查，结果见本次构建任务。
+- APK：本分支的 [GitHub Actions 构建记录](https://github.com/fresheon/AcodePlanB/actions?query=branch%3Afix%2Fpersistent-reading-session)，下载成功任务的 `acode-reading-progress-debug` 附件。
+- 签名限制：尚无原签名密钥，新安装包不保证覆盖安装；本次没有新增权限。

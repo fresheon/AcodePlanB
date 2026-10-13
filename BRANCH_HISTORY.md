@@ -124,5 +124,6 @@
 - 分支：`fix/system-bar-icon-contrast`
 - 基于：`fix/nonfullscreen-navigation-visible`（`ff8afc94f1c2a9e8bee56a26bd0b32bcf90a8d39`）。
 - 修改：以系统栏实际背景亮度选择图标明暗，深色背景使用浅色状态栏图标及导航三键，浅色背景使用深色图标；通过 AndroidX 兼容接口统一设置。非全屏显示导航栏后重新应用图标样式，覆盖旧全屏恢复标志。
-- 验证：待构建后补充；真机主题切换效果需复核。
-- APK：待补充。
+- 验证：82 项针对性单元测试、类型检查通过；启动、浏览器全屏切换及方案/阅读回归通过；Android 原生编译、APK 签名与最终权限检查通过，无新增权限。原生系统栏深浅图标的实际主题切换及退出全屏效果需平板复核，浏览器测试不能验证 Android 系统图标颜色。
+- APK：[下载测试 APK 压缩包](https://github.com/fresheon/AcodePlanB/actions/runs/38459765089/artifacts/11845911304)（解压后安装）。
+- APK 源码提交：`c915e9b9eda4cdee76d6e3262413d4a0481fa6e2`。

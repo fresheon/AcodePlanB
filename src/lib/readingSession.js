@@ -14,8 +14,15 @@ export function captureReadingPosition(view) {
   if (!box.height || !box.width) return null;
   const content = view.contentDOM.getBoundingClientRect();
   const x = Math.max(box.left + 1, Math.min(box.right - 1, content.left + 1));
-  const from = view.posAtCoords({ x, y: box.top + 1 }, false) ??
-    view.lineBlockAtHeight(Math.max(0, box.top - view.documentTop)).from;
+  // A hit test at the clipped top edge can pick the adjacent wrapped row.
+  // Anchor the actual rendered line and retain its (possibly negative) offset.
+  const firstLine = [...view.contentDOM.querySelectorAll(".cm-line")].find(line => {
+    const rect = line.getBoundingClientRect();
+    return rect.bottom > box.top && rect.top < box.bottom;
+  });
+  const from = firstLine ? view.posAtDOM(firstLine, 0) :
+    (view.posAtCoords({ x, y: box.top + 1 }, false) ??
+      view.lineBlockAtHeight(Math.max(0, box.top - view.documentTop)).from);
   const rect = view.coordsAtPos(from);
   if (!rect) return null;
   return { from, offset: rect.top - box.top, left: view.scrollDOM.scrollLeft };

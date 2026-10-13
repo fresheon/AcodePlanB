@@ -320,7 +320,7 @@ async function onDeviceReady() {
 
 	acode.setLoadingMessage("Loading settings...");
 	await settings.init();
-	await initializeEditorProfiles();
+	await initializeEditorProfiles({ settings, fonts });
 	fileIcons.bindSettings(settings);
 	fileIcons.syncFromSettings();
 	themes.init();

@@ -1,8 +1,6 @@
-import settings from "./settings";
-import fonts from "./fonts";
 import { createEditorProfileManager } from "./editorProfiles";
 let manager;
-export async function initializeEditorProfiles() {
+export async function initializeEditorProfiles({ settings, fonts }) {
   if (manager) return manager;
   const token = await new Promise((resolve, reject) => {
     if (window.cordova?.exec) window.cordova.exec(resolve, reject, "System", "editor-process-session", []);

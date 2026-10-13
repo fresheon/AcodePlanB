@@ -1,7 +1,7 @@
 name: Reading progress test APK
 on:
   push:
-    branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions, feat/document-bookmarks, fix/bookmark-scroll-layout, fix/bookmark-thumb-status-background, fix/fullscreen-padding-bookmark-priority, fix/fullscreen-persistent-top-space, fix/persistent-reading-session, fix/stable-multi-file-reading, feat/editor-layout-profiles]
+    branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions, feat/document-bookmarks, fix/bookmark-scroll-layout, fix/bookmark-thumb-status-background, fix/fullscreen-padding-bookmark-priority, fix/fullscreen-persistent-top-space, fix/persistent-reading-session, fix/stable-multi-file-reading, feat/editor-layout-profiles, fix/editor-profiles-startup]
 concurrency:
   group: reading-progress-${{ github.ref }}
   cancel-in-progress: true
@@ -37,7 +37,7 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Unit tests and types
         run: |
-          npm test -- tests/unit/editorProfiles.test.js tests/unit/saveStateReading.test.js tests/unit/readingSession.test.js tests/unit/restoreFiles.test.js tests/unit/documentBookmarks.test.js tests/unit/bookmarkScrollbar.test.js tests/unit/editorReadingControls.test.js tests/unit/editorAppearanceSettings.test.js tests/unit/editorPageTurning.test.ts tests/unit/androidPermissions.test.js
+          npm test -- tests/unit/editorProfilesRuntime.test.js tests/unit/editorProfiles.test.js tests/unit/saveStateReading.test.js tests/unit/readingSession.test.js tests/unit/restoreFiles.test.js tests/unit/documentBookmarks.test.js tests/unit/bookmarkScrollbar.test.js tests/unit/editorReadingControls.test.js tests/unit/editorAppearanceSettings.test.js tests/unit/editorPageTurning.test.ts tests/unit/androidPermissions.test.js
           npm run typecheck
       - name: Prepare Cordova
         run: npm run setup
@@ -49,6 +49,7 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright
           npx playwright install --with-deps chromium
+          CHROMIUM_PATH="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')" node tests/browser/startup.cjs
           CHROMIUM_PATH="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')" node tests/browser/editorReadingControls.cjs
           CHROMIUM_PATH="$(node -e 'process.stdout.write(require("playwright").chromium.executablePath())')" node tests/browser/editorProfiles.cjs
       - name: Build and verify debug APK

@@ -1,5 +1,3 @@
-import { EditorView } from "@codemirror/view";
-
 const key = "acode-reading-positions-v1";
 function positions(storage) {
   try { return JSON.parse(storage.getItem(key) || "{}") || {}; } catch { return {}; }
@@ -59,11 +57,14 @@ export function forgetReadingPosition(file, storage = localStorage) {
 export function restoreReadingPosition(view, file, isCurrent, done = () => {}) {
   const position = file.readingPosition;
   if (!validReadingPosition(position)) return null;
-  let cancelled = false, passes = 0;
+  let cancelled = false, passes = 0, frame = 0;
   const from = Math.min(position.from, view.state.doc.length);
   file.__readingRestorePending = true;
   const finish = () => { file.__readingRestorePending = false; done(); };
-  view.dispatch({ effects: EditorView.scrollIntoView(from, { y: "start" }) });
+  // Do not leave a scrollIntoView target that can later reapply its default
+  // margin and move the restored page. Scroll to the text block, then measure.
+  const top = view.lineBlockAt(from).top + view.documentTop - view.scrollDOM.getBoundingClientRect().top;
+  view.scrollDOM.scrollTop = Math.max(0, view.scrollDOM.scrollTop + top - position.offset);
   const measure = () => view.requestMeasure({
     read() {
       if (cancelled || !isCurrent()) return null;
@@ -76,10 +77,10 @@ export function restoreReadingPosition(view, file, isCurrent, done = () => {}) {
         view.scrollDOM.scrollTop += delta;
         view.scrollDOM.scrollLeft = position.left;
       }
-      if (++passes < 4 && (delta === null || Math.abs(delta) > 0.5 || passes < 2)) measure();
+      if (++passes < 8 && (delta === null || Math.abs(delta) > 0.5 || passes < 3)) frame = requestAnimationFrame(measure);
       else finish();
     },
   });
   measure();
-  return () => { cancelled = true; file.__readingRestorePending = false; };
+  return () => { cancelled = true; cancelAnimationFrame(frame); file.__readingRestorePending = false; };
 }

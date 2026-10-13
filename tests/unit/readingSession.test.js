@@ -7,7 +7,7 @@ function viewAt(from = 80, offset = -3) {
   dom.getBoundingClientRect = () => ({ top: 50, left: 0, right: 300, width: 300, height: 400 });
   dom.scrollTop = 500; dom.scrollLeft = 0;
   return { state: EditorState.create({ doc: "字".repeat(200) }), scrollDOM: dom, contentDOM: dom,
-    posAtCoords: () => from, coordsAtPos: () => ({ top: 50 + offset }), dispatch: vi.fn(), requestMeasure: vi.fn() };
+    documentTop: -450, lineBlockAt: () => ({ top: 497 }), posAtCoords: () => from, coordsAtPos: () => ({ top: 50 + offset }), dispatch: vi.fn(), requestMeasure: vi.fn() };
 }
 describe("durable reading sessions", () => {
   beforeEach(() => { localStorage.clear(); document.body.replaceChildren(); });

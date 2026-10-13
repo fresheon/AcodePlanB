@@ -1,7 +1,7 @@
 name: Reading progress test APK
 on:
   push:
-    branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions, feat/document-bookmarks, fix/bookmark-scroll-layout, fix/bookmark-thumb-status-background, fix/fullscreen-padding-bookmark-priority, fix/fullscreen-persistent-top-space, fix/persistent-reading-session, fix/stable-multi-file-reading, feat/editor-layout-profiles, fix/editor-profiles-startup, fix/folder-picker-profile-controls, fix/browser-order-profile-export, fix/welcome-browser-appearance, fix/profile-import-resume-display, fix/visual-profile-button-spacing]
+    branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions, feat/document-bookmarks, fix/bookmark-scroll-layout, fix/bookmark-thumb-status-background, fix/fullscreen-padding-bookmark-priority, fix/fullscreen-persistent-top-space, fix/persistent-reading-session, fix/stable-multi-file-reading, feat/editor-layout-profiles, fix/editor-profiles-startup, fix/folder-picker-profile-controls, fix/browser-order-profile-export, fix/welcome-browser-appearance, fix/profile-import-resume-display, fix/visual-profile-button-spacing, fix/nonfullscreen-navigation-visible]
 concurrency:
   group: reading-progress-${{ github.ref }}
   cancel-in-progress: true

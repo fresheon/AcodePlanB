@@ -136,11 +136,12 @@ public class System extends CordovaPlugin {
         editorStatusBarBackground.setVisibility(savedEditorStatusVisibility);
       if (!savedEditorFullscreenFlag) window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
       controller.hide(WindowInsetsCompat.Type.systemBars());
-      controller.show(savedEditorBars);
+      controller.show(savedEditorBars | WindowInsetsCompat.Type.navigationBars());
       controller.setSystemBarsBehavior(savedEditorBehavior);
       if (SDK_INT < 30) decor.setSystemUiVisibility(savedEditorSystemUi);
     }
     editorImmersive = enabled;
+    showNormalNavigationBar();
     decor.post(() -> updateNavigationBackground());
     // Re-run Cordova's margin calculation after changing the background view.
     androidx.core.view.ViewCompat.requestApplyInsets(webView.getView());
@@ -161,7 +162,21 @@ public class System extends CordovaPlugin {
       activity.getWindow().getDecorView().postDelayed(() -> updateNavigationBackground(), 200);
     });
     if (theme != null) activity.runOnUiThread(() -> applySystemBarTheme());
-    if (editorImmersive) activity.runOnUiThread(() -> setEditorImmersive(true));
+    activity.runOnUiThread(() -> setEditorImmersive(editorImmersive));
+  }
+
+  private void showNormalNavigationBar() {
+    if (editorImmersive || webView.isCustomViewShowing()) return;
+    Window window = activity.getWindow();
+    View decor = window.getDecorView();
+    if (SDK_INT < 30) {
+      decor.setSystemUiVisibility(decor.getSystemUiVisibility() &
+        ~(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+          View.SYSTEM_UI_FLAG_IMMERSIVE | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY));
+    }
+    WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, decor);
+    controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_DEFAULT);
+    controller.show(WindowInsetsCompat.Type.navigationBars());
   }
 
   private void editorStatus(CallbackContext callback) throws JSONException {
@@ -2003,6 +2018,7 @@ public class System extends CordovaPlugin {
 
     setStatusBarStyle(window);
     setNavigationBarStyle(window);
+    showNormalNavigationBar();
     decorView.post(() -> updateNavigationBackground());
   }
 

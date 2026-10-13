@@ -1,4 +1,4 @@
-import { captureReadingPosition } from "./readingSession";
+import { persistReadingPosition } from "./readingSession";
 import { getAllFolds, getScrollPosition, getSelection } from "cm/editorUtils";
 import config from "./config";
 import { addedFolder } from "./openFolder";
@@ -61,7 +61,7 @@ export default () => {
 		const pane = editorManager.getFilePane?.(file);
 		const liveView = pane?.activeFile === file ? pane.editor : (activeFile?.id === file.id ? editor : null);
 		if (liveView && file.loaded && !file.loading && !file.__readingRestorePending) {
-			file.readingPosition = captureReadingPosition(liveView) || file.readingPosition;
+			persistReadingPosition(file, liveView);
 		}
 		const fileJson = {
 			id: file.id,

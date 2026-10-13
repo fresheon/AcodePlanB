@@ -65,6 +65,16 @@ describe("restored file loading", () => {
 		await load;
 	});
 
+	it("preserves the unselected second tab's position despite an older journal", async () => {
+		const second = { id: "two", filename: "two.txt", uri: "file:///two.txt", readingPosition: { from: 120, offset: -3, left: 0 } };
+		localStorage.setItem("acode-reading-positions-v1", JSON.stringify({ two: { uri: second.uri, position: { from: 0, offset: 0, left: 0 } } }));
+		const result = restoreFiles([{ id: "one", filename: "one.txt", uri: "file:///one.txt", render: true }, second]);
+		expect(runtime.instances[1].options.readingPosition).toEqual(second.readingPosition);
+		expect(runtime.instances[1].options.render).toBe(false);
+		for (const file of runtime.instances) file.resolveLoad();
+		await result;
+	});
+
 	it("silently drops one unavailable path without aborting the other files", async () => {
 		const result = restoreFiles([{ id: "gone", filename: "gone.txt", uri: "file:///gone.txt" }, { id: "kept", filename: "kept.txt", uri: "file:///kept.txt" }]);
 		runtime.instances[0].rejectLoad(new Error("path moved"));

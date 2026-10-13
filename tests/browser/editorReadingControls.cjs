@@ -769,6 +769,19 @@ async function run() {
     }
     assert.equal(restart.closedPosition, null);
     assert.equal(restart.reopenedTop, 0);
+
+    for (const wrap of [false, true]) {
+      const tabs = await page.evaluate(wrap => window.testSharedReadingTabs(wrap), wrap);
+      const assertTab = (actual, index, phase) => {
+        const expected = tabs.expected[index];
+        assert.equal(actual.from, expected.from, `${phase}, file ${index}, wrap=${wrap}`);
+        assert(Math.abs(actual.offset - expected.offset) < 1, JSON.stringify({ phase, index, wrap, expected, actual }));
+        assert(Math.abs(actual.pixel - expected.pixel) < 1, JSON.stringify({ phase, index, wrap, expected, actual }));
+      };
+      for (const item of tabs.switches) assertTab(item.position, item.index, "repeated shared-view switch");
+      tabs.restarted.forEach((position, index) => assertTab(position, index, "restart with file 1 initially active"));
+      for (const item of tabs.restartSwitches) assertTab(item.position, item.index, "shared-view switch after restart");
+    }
 		console.log(
 			"Browser regression passed: real toolbar hit testing, both touch buttons, fullscreen exit, read-only selection guard, scrolling, editable text input, paging swipes, tap paging and paging disable.",
 		);

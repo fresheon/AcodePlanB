@@ -31,12 +31,19 @@ export function captureReadingPosition(view) {
   }
 }
 export function savedReadingPosition(file, storage = localStorage) {
+  // The complete file snapshot is authoritative; the journal is a fallback.
+  if (validReadingPosition(file.readingPosition)) return file.readingPosition;
   const saved = positions(storage)[file.id];
   if (saved?.uri === (file.uri || null) && validReadingPosition(saved.position)) return saved.position;
-  return validReadingPosition(file.readingPosition) ? file.readingPosition : null;
+  return null;
 }
 export function persistReadingPosition(file, view, storage = localStorage) {
   if (!file || file.type !== "editor" || !file.loaded || file.loading || file.__readingRestorePending) return;
+  // A shared editor can still contain the previous tab's document.
+  if (file.session?.doc && file.session.doc !== view.state.doc) return;
+  const restored = view.__readingPositionRestored;
+  if (validReadingPosition(file.readingPosition) && restored?.fileId === file.id &&
+      restored.top === view.scrollDOM.scrollTop && restored.left === view.scrollDOM.scrollLeft) return;
   const position = captureReadingPosition(view);
   if (!position) return;
   file.readingPosition = position;
@@ -44,7 +51,6 @@ export function persistReadingPosition(file, view, storage = localStorage) {
   file.lastScrollLeft = view.scrollDOM.scrollLeft;
   const saved = positions(storage);
   saved[file.id] = { uri: file.uri || null, position };
-  storage.setItem(key, JSON.stringify(saved));
   // Update synchronously: a killed process has no reliable shutdown callback.
   const files = JSON.parse(storage.getItem("files") || "[]");
   const entry = files.find(item => item.id === file.id);
@@ -52,6 +58,7 @@ export function persistReadingPosition(file, view, storage = localStorage) {
     Object.assign(entry, { readingPosition: position, scrollTop: file.lastScrollTop, scrollLeft: file.lastScrollLeft, editable: false });
     storage.setItem("files", JSON.stringify(files));
   }
+  storage.setItem(key, JSON.stringify(saved));
 }
 export function forgetReadingPosition(file, storage = localStorage) {
   const saved = positions(storage);
@@ -65,25 +72,41 @@ export function restoreReadingPosition(view, file, isCurrent, done = () => {}) {
   let cancelled = false, passes = 0, frame = 0;
   const from = Math.min(position.from, view.state.doc.length);
   file.__readingRestorePending = true;
-  const finish = () => { file.__readingRestorePending = false; done(); };
-  // Do not leave a scrollIntoView target that can later reapply its default
-  // margin and move the restored page. Scroll to the text block, then measure.
-  const top = view.lineBlockAt(from).top + view.documentTop - view.scrollDOM.getBoundingClientRect().top;
-  view.scrollDOM.scrollTop = Math.max(0, view.scrollDOM.scrollTop + top - position.offset);
+  const finish = () => {
+    // Keep programmatic scroll events out of the durable position journal.
+    frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        if (cancelled) return;
+        if (isCurrent()) {
+          file.lastScrollTop = view.scrollDOM.scrollTop;
+          file.lastScrollLeft = view.scrollDOM.scrollLeft;
+          view.__readingPositionRestored = {
+            fileId: file.id, top: file.lastScrollTop, left: file.lastScrollLeft,
+          };
+        }
+        file.__readingRestorePending = false;
+        done();
+      });
+    });
+  };
   const measure = () => view.requestMeasure({
     read() {
       if (cancelled || !isCurrent()) return null;
+      const box = view.scrollDOM.getBoundingClientRect();
       const rect = view.coordsAtPos(from);
-      return rect ? rect.top - view.scrollDOM.getBoundingClientRect().top - position.offset : null;
+      // Run only after CodeMirror measures the newly selected document.
+      const offset = rect ? rect.top - box.top : view.lineBlockAt(from).top + view.documentTop - box.top;
+      return view.scrollDOM.scrollTop + offset - position.offset;
     },
-    write(delta) {
+    write(top) {
       if (cancelled) return;
       if (!isCurrent()) { finish(); return; }
-      if (delta !== null) {
-        view.scrollDOM.scrollTop += delta;
+      const previous = view.scrollDOM.scrollTop;
+      if (top !== null) {
+        view.scrollDOM.scrollTop = Math.max(0, top);
         view.scrollDOM.scrollLeft = position.left;
       }
-      if (++passes < 8 && (delta === null || Math.abs(delta) > 0.5 || passes < 3)) frame = requestAnimationFrame(measure);
+      if (++passes < 8 && (top === null || Math.abs(view.scrollDOM.scrollTop - previous) > 0.5 || passes < 3)) frame = requestAnimationFrame(measure);
       else finish();
     },
   });

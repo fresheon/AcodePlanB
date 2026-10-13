@@ -1,4 +1,4 @@
-import { Compartment } from "@codemirror/state";
+import { Compartment, EditorState } from "@codemirror/state";
 import {
 	EditorView,
 	drawSelection,
@@ -178,4 +178,79 @@ window.testReadingRestart = async () => {
   const reopenedTop = reopened.view.scrollDOM.scrollTop;
   reopened.view.destroy(); reopened.host.remove();
   return { before, after, readOnly, fullscreen, closedPosition, reopenedTop };
+};
+
+// Multiple documents share one EditorView, as in the application tab switcher.
+window.testSharedReadingTabs = async (wrap) => {
+  const data = new Map();
+  const storage = { getItem: key => data.get(key) || null, setItem: (key, value) => data.set(key, value) };
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const host = document.createElement("div");
+  host.className = "editor-pane";
+  host.style.cssText = "position:fixed;left:0;top:70px;width:412px;height:420px;z-index:20000";
+  document.body.append(host);
+  const createState = doc => EditorState.create({ doc, extensions: [
+    createEditorReadOnlyExtension(true), wrap ? EditorView.lineWrapping : [],
+    editorAppearance({ editorPaddingTop: 30, editorParagraphSpacing: 18 }),
+    EditorView.theme({ "&": { height: "100%", fontSize: "17px" }, ".cm-content": { lineHeight: "1.6" }, ".cm-scroller": { overflow: "auto" } }),
+  ] });
+  let files = [0,1,2].map(i => ({ id: `shared-${i}`, uri: `file:///shared-${i}.txt`, type: "editor", loaded: true,
+    session: createState(Array.from({ length: 220 }, (_, n) => `file ${i} paragraph ${n} ` + "reading words ".repeat(7+i)).join("\n")) }));
+  let active = files[0], stop;
+  const view = new EditorView({ state: active.session, parent: host });
+  view.scrollDOM.addEventListener("scroll", () => persistReadingPosition(active, view, storage));
+  const snapshot = () => {
+    persistReadingPosition(active, view, storage);
+    storage.setItem("files", JSON.stringify(files.map(file => ({ id: file.id, uri: file.uri, type: "editor", loaded: true,
+      readingPosition: file.readingPosition, scrollTop: file.lastScrollTop, scrollLeft: file.lastScrollLeft, render: file === active, editable: false }))));
+  };
+  async function switchTo(index) {
+    persistReadingPosition(active, view, storage);
+    active.session = view.state;
+    stop?.(); active = files[index];
+    active.__readingRestorePending = !!active.readingPosition;
+    view.setState(active.session);
+    if (active.readingPosition) await new Promise(resolve => { stop = restoreReadingPosition(view, active, () => active === files[index], resolve); });
+    await wait(60);
+    snapshot();
+    return { ...captureReadingPosition(view), pixel: view.scrollDOM.scrollTop };
+  }
+  const expected = [], switches = [], restarted = [], restartSwitches = [];
+  try {
+    snapshot(); await wait(180);
+    for (let i = 0; i < files.length; i++) {
+      await switchTo(i);
+      view.dispatch({ effects: EditorView.scrollIntoView(view.state.doc.line(45+i*55).from, { y: "start" }) });
+      await wait(180); view.scrollDOM.scrollTop += 7; await wait(180);
+      snapshot(); expected.push({ ...captureReadingPosition(view), pixel: view.scrollDOM.scrollTop });
+    }
+    for (let n = 0; n < 12; n++) for (const i of [0,1,2]) switches.push({ index: i, position: await switchTo(i) });
+    await switchTo(0); snapshot();
+    const docs = files.map(file => file.session.doc.toString());
+    const saved = JSON.parse(storage.getItem("files"));
+    stop?.(); view.destroy(); host.remove(); // hard close: no final save callback
+    files = saved.map((file, i) => ({ ...file, session: createState(docs[i]), readingPosition: savedReadingPosition(file, storage) }));
+    active = files[0];
+    // Reuse the same host dimensions, but a brand new shared editor/window.
+    document.body.append(host);
+    const next = new EditorView({ state: active.session, parent: host });
+    next.scrollDOM.addEventListener("scroll", () => persistReadingPosition(active, next, storage));
+    let cancel;
+    async function visit(index) {
+      persistReadingPosition(active, next, storage); active.session = next.state;
+      cancel?.(); active = files[index]; active.__readingRestorePending = !!active.readingPosition;
+      next.setState(active.session);
+      await new Promise(resolve => { cancel = restoreReadingPosition(next, active, () => active === files[index], resolve); });
+      await wait(60);
+      return { ...captureReadingPosition(next), pixel: next.scrollDOM.scrollTop };
+    }
+    // File 1 is initially visible; files 2/3 remain inactive until visited.
+    await new Promise(resolve => { cancel = restoreReadingPosition(next, active, () => active === files[0], resolve); });
+    for (let i = 0; i < files.length; i++) restarted.push(await visit(i));
+    for (let n = 0; n < 8; n++) for (const i of [0,1,2]) restartSwitches.push({ index: i, position: await visit(i) });
+    cancel?.(); next.destroy(); host.remove();
+    return { expected, switches, restarted, restartSwitches };
+  } finally {
+    stop?.(); if (view.dom.isConnected) view.destroy(); host.remove();
+  }
 };

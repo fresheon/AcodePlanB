@@ -1,4 +1,4 @@
-import { persistReadingPosition, restoreReadingPosition } from "./readingSession";
+import { persistReadingPosition, restoreReadingPosition, validReadingPosition } from "./readingSession";
 import sidebarApps from "sidebarApps";
 import { indentUnit, language as languageFacet } from "@codemirror/language";
 import { search } from "@codemirror/search";
@@ -2922,6 +2922,9 @@ async function EditorManager($header, $body) {
 			restoreScroll = true,
 			scheduleLsp = true,
 		} = options;
+		cancelPendingScrollRestore();
+		clearScrollbarScrollLock();
+		file.__readingRestorePending = restoreScroll && !!validReadingPosition(file.readingPosition);
 		const extensionSignature = getEditorExtensionSignature(file);
 		const languageSignature = getFileLanguageSignature(
 			file,
@@ -4366,10 +4369,10 @@ async function EditorManager($header, $body) {
 		}
 
 		function handleEditorScroll() {
+			if (!scroller) return;
+			if (pane === activePane && restoreScrollbarScrollLock()) return;
 			if (sessionStorage.getItem("isfilesRestored") === "true") persistReadingPosition(pane.activeFile, editor);
 			if (pane !== activePane) return;
-			if (!scroller) return;
-			if (restoreScrollbarScrollLock()) return;
 			if (!isScrolling) {
 				isScrolling = true;
 				if (hasHoverTooltips(editor.state)) {
@@ -4387,14 +4390,18 @@ async function EditorManager($header, $body) {
 			}, 100);
 		}
 
+		function interruptScrollRestore() {
+			cancelPendingScrollRestore();
+			clearScrollbarScrollLock();
+		}
 		scroller?.addEventListener("scroll", handleEditorScroll, { passive: true });
-		scroller?.addEventListener("pointerdown", clearScrollbarScrollLock, {
+		scroller?.addEventListener("pointerdown", interruptScrollRestore, {
 			passive: true,
 		});
-		scroller?.addEventListener("touchstart", clearScrollbarScrollLock, {
+		scroller?.addEventListener("touchstart", interruptScrollRestore, {
 			passive: true,
 		});
-		scroller?.addEventListener("wheel", clearScrollbarScrollLock, {
+		scroller?.addEventListener("wheel", interruptScrollRestore, {
 			passive: true,
 		});
 		syncScrollUi();
@@ -4534,9 +4541,9 @@ async function EditorManager($header, $body) {
 
 		pane.cleanupEditorListeners = () => {
 			scroller?.removeEventListener("scroll", handleEditorScroll);
-			scroller?.removeEventListener("pointerdown", clearScrollbarScrollLock);
-			scroller?.removeEventListener("touchstart", clearScrollbarScrollLock);
-			scroller?.removeEventListener("wheel", clearScrollbarScrollLock);
+			scroller?.removeEventListener("pointerdown", interruptScrollRestore);
+			scroller?.removeEventListener("touchstart", interruptScrollRestore);
+			scroller?.removeEventListener("wheel", interruptScrollRestore);
 			contentDOM.removeEventListener("focus", handleContentFocus);
 			contentDOM.removeEventListener("blur", handleContentBlur);
 			contentDOM.removeEventListener("keydown", handleContentKeydown);
@@ -4690,6 +4697,8 @@ async function EditorManager($header, $body) {
 	 * @param {Number} value
 	 */
 	function onscrollV(value) {
+		cancelPendingScrollRestore();
+		clearScrollbarScrollLock();
 		const scroller = editor?.scrollDOM;
 		if (!scroller) return;
 		suppressCursorReveal();
@@ -4719,6 +4728,8 @@ async function EditorManager($header, $body) {
 	 * @param {number} value - The scroll value.
 	 */
 	function onscrollH(value) {
+		cancelPendingScrollRestore();
+		clearScrollbarScrollLock();
 		if (appSettings.value.textWrap) return;
 		const scroller = editor?.scrollDOM;
 		if (!scroller) return;
@@ -5080,8 +5091,7 @@ async function EditorManager($header, $body) {
 		if (prev?.type === "editor" && prev.loaded && !prev.loading) {
 			prev.session = getRawEditorState(pane.editor.state);
 			persistReadingPosition(prev, pane.editor);
-			prev.lastScrollTop = pane.editor.scrollDOM?.scrollTop || 0;
-			prev.lastScrollLeft = pane.editor.scrollDOM?.scrollLeft || 0;
+			// Position fields are updated only by the measured capture above.
 			window.setTimeout(() => {
 				prev.flushCacheWrite?.().catch((error) => {
 					warnRecoverable(

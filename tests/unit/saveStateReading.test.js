@@ -26,4 +26,16 @@ describe("reading session snapshots", () => {
     expect(files).toHaveLength(2); expect(files.every(f => f.editable === false)).toBe(true);
     expect(files[0].readingPosition).toEqual({ from: 80, offset: -3, left: 0 });
   });
+  it("keeps the second loaded document's position when the first document is active at shutdown", () => {
+    sessionStorage.setItem("isfilesRestored", "true");
+    const one = { id: "one", type: "editor", loaded: true, readingPosition: { from: 80, offset: -2, left: 0 } };
+    const two = { id: "two", type: "editor", loaded: true, lastScrollTop: 800, readingPosition: { from: 140, offset: -3, left: 0 } };
+    window.editorManager.files = [one, two]; window.editorManager.activeFile = one;
+    saveState();
+    const files = JSON.parse(localStorage.getItem("files"));
+    expect(files[1].readingPosition).toEqual(two.readingPosition);
+    expect(files[1].scrollTop).toBe(800);
+    expect(files[1].render).toBe(false);
+  });
+
 });

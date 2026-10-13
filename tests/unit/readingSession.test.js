@@ -20,6 +20,26 @@ describe("durable reading sessions", () => {
     expect(savedReadingPosition({ id: "two", uri: two.uri })).toEqual({ from: 120, offset: 2, left: 0 });
     expect(JSON.parse(localStorage.getItem("files")).map(f => f.readingPosition.from)).toEqual([80, 120]);
   });
+  it("uses an inactive file's complete snapshot instead of an older first-page journal", () => {
+    const file = { id: "two", uri: "file:///two.txt", readingPosition: { from: 120, offset: -3, left: 0 } };
+    localStorage.setItem("acode-reading-positions-v1", JSON.stringify({ two: { uri: file.uri, position: { from: 0, offset: 0, left: 0 } } }));
+    expect(savedReadingPosition(file)).toEqual(file.readingPosition);
+  });
+  it("does not attribute a shared view's previous document to the selected file", () => {
+    const file = { id: "two", type: "editor", loaded: true, session: EditorState.create({ doc: "other document" }), readingPosition: { from: 4, offset: 0, left: 0 } };
+    persistReadingPosition(file, viewAt(80));
+    expect(file.readingPosition.from).toBe(4);
+    expect(localStorage.getItem("acode-reading-positions-v1")).toBeNull();
+  });
+  it("does not recapture a restored viewport on synthetic scroll or repeated tab switches", () => {
+    const view = viewAt(80); const file = { id: "two", type: "editor", loaded: true, readingPosition: { from: 120, offset: -3, left: 0 } };
+    view.__readingPositionRestored = { fileId: file.id, top: view.scrollDOM.scrollTop, left: 0 };
+    persistReadingPosition(file, view);
+    expect(file.readingPosition.from).toBe(120);
+    view.scrollDOM.scrollTop += 20;
+    persistReadingPosition(file, view);
+    expect(file.readingPosition.from).toBe(80);
+  });
   it("forgets a manually closed document and rejects a changed URI", () => {
     const file = { id: "one", uri: "file:///one.txt", type: "editor", loaded: true };
     persistReadingPosition(file, viewAt());

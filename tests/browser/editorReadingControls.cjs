@@ -776,7 +776,13 @@ async function run() {
         const expected = tabs.expected[index];
         assert.equal(actual.from, expected.from, `${phase}, file ${index}, wrap=${wrap}`);
         assert(Math.abs(actual.offset - expected.offset) < 1, JSON.stringify({ phase, index, wrap, expected, actual }));
-        assert(Math.abs(actual.pixel - expected.pixel) < 1, JSON.stringify({ phase, index, wrap, expected, actual }));
+        // Absolute scrollTop can change with CodeMirror's virtual height map.
+        // Verify the same visible paragraphs at the same screen coordinates.
+        assert.deepEqual(actual.visible.map(line => line.from), expected.visible.map(line => line.from), `${phase}, file ${index}, wrap=${wrap}`);
+        actual.visible.forEach((line, n) => {
+          assert(Math.abs(line.top - expected.visible[n].top) < 1, JSON.stringify({ phase, index, wrap, expected, actual }));
+          assert(Math.abs(line.bottom - expected.visible[n].bottom) < 1, JSON.stringify({ phase, index, wrap, expected, actual }));
+        });
       };
       for (const item of tabs.switches) assertTab(item.position, item.index, "repeated shared-view switch");
       tabs.restarted.forEach((position, index) => assertTab(position, index, "restart with file 1 initially active"));

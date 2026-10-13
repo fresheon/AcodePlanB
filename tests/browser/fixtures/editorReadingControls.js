@@ -213,8 +213,15 @@ window.testSharedReadingTabs = async (wrap) => {
     if (active.readingPosition) await new Promise(resolve => { stop = restoreReadingPosition(view, active, () => active === files[index], resolve); });
     await wait(60);
     snapshot();
-    return { ...captureReadingPosition(view), pixel: view.scrollDOM.scrollTop };
+    return inspectViewport(view);
   }
+  const inspectViewport = editor => {
+    const box = editor.scrollDOM.getBoundingClientRect();
+    const visible = [...editor.contentDOM.querySelectorAll(".cm-line")].filter(line => {
+      const rect = line.getBoundingClientRect(); return rect.bottom > box.top && rect.top < box.bottom;
+    }).map(line => { const rect = line.getBoundingClientRect(); return { from: editor.posAtDOM(line, 0), top: rect.top - box.top, bottom: rect.bottom - box.top }; });
+    return { ...captureReadingPosition(editor), visible, pixel: editor.scrollDOM.scrollTop };
+  };
   const expected = [], switches = [], restarted = [], restartSwitches = [];
   try {
     snapshot(); await wait(180);
@@ -222,7 +229,7 @@ window.testSharedReadingTabs = async (wrap) => {
       await switchTo(i);
       view.dispatch({ effects: EditorView.scrollIntoView(view.state.doc.line(45+i*55).from, { y: "start" }) });
       await wait(180); view.scrollDOM.scrollTop += 7; await wait(180);
-      snapshot(); expected.push({ ...captureReadingPosition(view), pixel: view.scrollDOM.scrollTop });
+      snapshot(); expected.push(inspectViewport(view));
     }
     for (let n = 0; n < 12; n++) for (const i of [0,1,2]) switches.push({ index: i, position: await switchTo(i) });
     await switchTo(0); snapshot();
@@ -242,7 +249,7 @@ window.testSharedReadingTabs = async (wrap) => {
       next.setState(active.session);
       await new Promise(resolve => { cancel = restoreReadingPosition(next, active, () => active === files[index], resolve); });
       await wait(60);
-      return { ...captureReadingPosition(next), pixel: next.scrollDOM.scrollTop };
+      return inspectViewport(next);
     }
     // File 1 is initially visible; files 2/3 remain inactive until visited.
     await new Promise(resolve => { cancel = restoreReadingPosition(next, active, () => active === files[0], resolve); });

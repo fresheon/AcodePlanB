@@ -46,6 +46,17 @@ describe("durable reading sessions", () => {
     stop(); measure = view.requestMeasure.mock.calls.at(-1)[0]; measure.write(measure.read());
     expect(file.__readingRestorePending).toBe(false); expect(view.scrollDOM.scrollTop).toBe(515);
   });
+  it("a cancelled restore cannot release the guard of a newer restore", () => {
+    const view = viewAt();
+    const file = { readingPosition: { from: 80, offset: -3, left: 0 } };
+    const stopOld = restoreReadingPosition(view, file, () => true);
+    const oldMeasure = view.requestMeasure.mock.calls[0][0];
+    stopOld();
+    const stopNew = restoreReadingPosition(view, file, () => true);
+    oldMeasure.write(oldMeasure.read());
+    expect(file.__readingRestorePending).toBe(true);
+    stopNew();
+  });
   it("preserves the last measured anchor while layout is unavailable during an editor update", () => {
     const file = { id: "one", type: "editor", loaded: true };
     const view = viewAt(); persistReadingPosition(file, view);

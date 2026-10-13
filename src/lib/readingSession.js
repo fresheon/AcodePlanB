@@ -77,7 +77,8 @@ export function restoreReadingPosition(view, file, isCurrent, done = () => {}) {
       return rect ? rect.top - view.scrollDOM.getBoundingClientRect().top - position.offset : null;
     },
     write(delta) {
-      if (cancelled || !isCurrent()) { finish(); return; }
+      if (cancelled) return;
+      if (!isCurrent()) { finish(); return; }
       if (delta !== null) {
         view.scrollDOM.scrollTop += delta;
         view.scrollDOM.scrollLeft = position.left;

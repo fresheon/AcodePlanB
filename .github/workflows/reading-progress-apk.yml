@@ -2,6 +2,9 @@ name: Reading progress test APK
 on:
   push:
     branches: [feat/reading-progress-bookmark-icons, fix/no-media-read-permissions, feat/document-bookmarks, fix/bookmark-scroll-layout, fix/bookmark-thumb-status-background, fix/fullscreen-padding-bookmark-priority, fix/fullscreen-persistent-top-space, fix/persistent-reading-session]
+concurrency:
+  group: reading-progress-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

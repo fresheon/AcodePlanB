@@ -806,6 +806,21 @@ async function run() {
         await page.evaluate(() => document.body.setAttribute("theme-type", "light"));
         await page.waitForFunction(() => !document.body.classList.contains("app-dark-status-mode"));
         assert.equal(await page.locator("#editor-fullscreen-status").count(),0);
+        await page.evaluate(() => {
+          const root=document.createElement("wc-page"); root.id="root"; root.className="primary show-header";
+          const header=reading.control.bookmarkList.parentNode.cloneNode(true);
+          for(const name of ["menu","play_arrow","more_vert"]) { const icon=document.createElement("span"); icon.className="icon "+name; header.append(icon); }
+          root.append(header); document.body.append(root); document.body.classList.add("fullscreen-mode");
+        });
+        for(const viewport of [{width:320,height:732},{width:1280,height:800}]) {
+          await page.setViewportSize(viewport);
+          const toolbar=await page.locator("#root > header").evaluate(header=>{
+            const bounds=header.getBoundingClientRect();
+            return [...header.querySelectorAll(".icon")].map(icon=>{const r=icon.getBoundingClientRect();return {display:getComputedStyle(icon).display,visible:r.width>0&&r.height>0&&r.left>=bounds.left&&r.right<=bounds.right+1&&r.top>=bounds.top&&r.bottom<=bounds.bottom+1};});
+          });
+          assert(toolbar.length>=8); for(const icon of toolbar) assert(icon.display!=="none"&&icon.visible,JSON.stringify(toolbar));
+        }
+        await page.evaluate(()=>{document.querySelector("#root").remove();document.body.classList.remove("fullscreen-mode");});
 		console.log(
 			"Browser regression passed: real toolbar hit testing, both touch buttons, fullscreen exit, read-only selection guard, scrolling, editable text input, paging swipes, tap paging and paging disable.",
 		);

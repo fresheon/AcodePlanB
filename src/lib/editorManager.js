@@ -3854,6 +3854,7 @@ async function EditorManager($header, $body) {
 		if (!pane.activeFile) pane.activeFile = file;
 		rebuildFileListFromPanes();
 		syncOpenFileList();
+		refreshWelcomeTabs(manager.files);
 		if (!manager.activeFile) {
 			$header.text = file.name;
 		}
@@ -5334,3 +5335,4 @@ async function EditorManager($header, $body) {
 }
 
 export default EditorManager;
+import { refreshWelcomeTabs } from "./welcomeLifecycle";

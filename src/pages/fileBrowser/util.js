@@ -15,6 +15,7 @@ export default {
 			name: name,
 			isDirectory: true,
 			parent: true,
+			icon: "folder",
 			type: "dir",
 			...extra,
 		});

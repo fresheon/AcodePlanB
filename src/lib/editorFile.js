@@ -1,4 +1,5 @@
 import fsOperation, { hasProvider } from "fileSystem";
+import { isOnlyWelcome, refreshWelcomeTabs, openWelcomeWhenEmpty } from "./welcomeLifecycle";
 // CodeMirror imports for document state management
 import { EditorSelection, EditorState } from "@codemirror/state";
 import {
@@ -1361,6 +1362,7 @@ export default class EditorFile {
 	 * @param {boolean} force if true, will prompt to save the file
 	 */
 	async remove(force = false, options = {}) {
+		if (isOnlyWelcome(this, editorManager.files)) return false;
 		const {
 			ignorePinned = false,
 			silentPinned = false,
@@ -1413,7 +1415,14 @@ export default class EditorFile {
 		if (!files.length) {
 			Sidebar.hide();
 			editorManager.activeFile = null;
-			if (!suppressFallback) new EditorFile();
+			if (!suppressFallback) {
+				await openWelcomeWhenEmpty(editorManager, async () => {
+					const { default: openWelcomeTab } = await import("pages/welcome");
+					openWelcomeTab();
+				});
+			}
+		} else if (files.length === 1 && files[0].id === "welcome-tab" && !suppressFallback) {
+			files[0].makeActive();
 		} else if (
 			removal?.wasPaneActive &&
 			removal.nextFile &&
@@ -1438,6 +1447,7 @@ export default class EditorFile {
 				editorManager.activePane?.activeFile || files[files.length - 1]
 			).makeActive();
 		}
+		refreshWelcomeTabs(editorManager.files);
 		editorManager.onupdate("remove-file");
 		editorManager.emit("remove-file", this);
 		return true;
@@ -2046,6 +2056,8 @@ export default class EditorFile {
 		run(false, appSettings.value.previewMode, file);
 	}
 
+	refreshTabCloseButton() { this.#updateTab(); }
+
 	#updateTab() {
 		if (!this.#tab) return;
 
@@ -2100,6 +2112,7 @@ export default class EditorFile {
 	}
 
 	#createTabTail() {
+		if (isOnlyWelcome(this, editorManager.files)) return tag("span");
 		if (!this.#pinned) {
 			return tag("span", {
 				className: "icon cancel",

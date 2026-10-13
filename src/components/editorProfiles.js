@@ -38,6 +38,8 @@ export function editorProfileDialog({ title, input = false, choices, validate, a
 }
 export default function editorProfilesRow({ manager, dialog = editorProfileDialog, exportToFolder, refresh = () => {} }) {
   const row = document.createElement("div"); row.className = "editor-profiles-row"; row.dataset.key = "editorProfiles";
+  const label = document.createElement("div"); label.className = "editor-profiles-heading"; label.textContent = "保存视觉方案";
+  const container = document.createElement("div"); container.className = "editor-profiles-container"; container.append(label, row); container.dataset.key = "editorProfiles";
   const select = document.createElement("select"); select.className = "editor-profiles-select"; select.setAttribute("aria-label", "方案框");
   const actions = document.createElement("div"); actions.className = "editor-profiles-actions";
   let busy = false;
@@ -81,5 +83,5 @@ export default function editorProfilesRow({ manager, dialog = editorProfileDialo
   }
   select.onchange = () => { const id = select.value; run(async () => { await manager.select(id); if (id) refresh(); }); };
   row.append(select, actions); const off = manager.subscribe(render); render();
-  return { element: row, destroy: off };
+  return { element: container, destroy: off };
 }

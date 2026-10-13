@@ -22,6 +22,7 @@ const { chromium } = require("playwright");
     }
     await page.addScriptTag({ content: fs.readFileSync(path.join(temporary, "bundle.js"), "utf8") });
     await page.evaluate(() => setupEditorProfiles());
+    assert.equal(await page.locator(".editor-profiles-heading").textContent(), "保存视觉方案");
     const choose = page.getByRole("combobox", { name: "方案框" });
     const button = text => page.locator(".editor-profiles-actions").getByRole("button", { name: text, exact: true });
     assert.equal(await choose.inputValue(), ""); assert(await button("删除").isDisabled()); assert(await button("导出").isDisabled());

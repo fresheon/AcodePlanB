@@ -133,6 +133,7 @@ public class System extends CordovaPlugin {
   @Override
   public void onResume(boolean multitasking) {
     super.onResume(multitasking);
+    if (theme != null) activity.runOnUiThread(() -> applySystemBarTheme());
     if (editorImmersive) activity.runOnUiThread(() -> setEditorImmersive(true));
   }
 
@@ -1957,7 +1958,7 @@ public class System extends CordovaPlugin {
     window.addFlags(0x80000000); // FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      window.setNavigationBarContrastEnforced(false);
+      window.setNavigationBarContrastEnforced(true);
       window.setStatusBarContrastEnforced(false);
     }
 

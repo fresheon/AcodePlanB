@@ -33,6 +33,7 @@ const { chromium } = require("playwright");
       await page.goto(origin);
       await page.evaluate(() => {
         window.device = { platform: "Android" }; window.readyListeners = 0;
+        window.cordova = { require: () => () => {}, exec: () => {}, plugins: {}, platformId: "android" };
         const add = document.addEventListener.bind(document);
         document.addEventListener = (name, ...args) => { if (name === "deviceready") window.readyListeners++; return add(name, ...args); };
       });

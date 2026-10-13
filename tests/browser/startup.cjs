@@ -32,10 +32,10 @@ const { chromium } = require("playwright");
       const errors = []; page.on("pageerror", error => errors.push(error.message));
       await page.goto(origin);
       await page.evaluate(() => {
-        window.device = { platform: "Android" }; window.readyListeners = 0;
+        window.device = { platform: "Android" }; window.readyListeners = [];
         window.cordova = { require: () => () => {}, exec: () => {}, plugins: {}, platformId: "android" };
         const add = document.addEventListener.bind(document);
-        document.addEventListener = (name, ...args) => { if (name === "deviceready") window.readyListeners++; return add(name, ...args); };
+        document.addEventListener = (name, ...args) => { if (name === "deviceready") window.readyListeners.push(args[0].name); return add(name, ...args); };
       });
       await page.addScriptTag({ url: `${origin}${script}` });
       await page.waitForTimeout(100);
@@ -45,7 +45,7 @@ const { chromium } = require("playwright");
     const before = await load("/before/before.js");
     assert(before.errors.some(error => /undefined.*\bon\b/.test(error)), JSON.stringify(before));
     const after = await load("/build/main.js");
-    assert.deepEqual(after.errors, []); assert.equal(after.listeners, 1);
+    assert.deepEqual(after.errors, []); assert(after.listeners.includes("onDeviceReady"), JSON.stringify(after));
     console.log("Startup entry regression passed: previous eager import reproduces undefined.on; actual fixed main.js evaluates without error and registers deviceready.");
   } finally {
     await browser?.close(); await new Promise(resolve => server ? server.close(resolve) : resolve());

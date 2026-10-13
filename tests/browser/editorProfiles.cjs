@@ -15,6 +15,11 @@ const { chromium } = require("playwright");
     const page = await browser.newPage({ viewport: { width: 412, height: 732 }, hasTouch: true });
     await page.setContent('<html><body style="margin:0"></body></html>');
     await page.addStyleTag({ content: fs.readFileSync(path.join(repo, "www/build/main.css"), "utf8") });
+    const styles = path.join(repo, "www/build");
+    for (const file of fs.readdirSync(styles).filter(file => file.endsWith(".css") && file !== "main.css")) {
+      const content = fs.readFileSync(path.join(styles, file), "utf8");
+      if (content.includes("editor-profiles-row")) await page.addStyleTag({ content });
+    }
     await page.addScriptTag({ content: fs.readFileSync(path.join(temporary, "bundle.js"), "utf8") });
     await page.evaluate(() => setupEditorProfiles());
     const choose = page.getByRole("combobox", { name: "方案框" });

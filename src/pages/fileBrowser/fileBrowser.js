@@ -34,7 +34,8 @@ import _addMenuHome from "./add-menu-home.hbs";
 import _template from "./fileBrowser.hbs";
 import _list from "./list.hbs";
 import util from "./util";
-import { pickSystemFolder, systemFolderButton } from "./systemFolder";
+import { pickSystemFolder, systemFolderButton, isPickerCancelled } from "./systemFolder";
+import { orderStorageEntries } from "./storageOrder";
 
 /**
  * @typedef {{url: String, name: String}} Location
@@ -672,6 +673,7 @@ function FileBrowserInclude(mode, info, doesOpenLast = true) {
 		}
 
 		function selectDocument() {
+			if (mode === "folder") { selectSystemFolder(); return; }
 			checkFiles.check = false;
 			sdcard.openDocumentFile(
 				(res) => {
@@ -685,7 +687,7 @@ function FileBrowserInclude(mode, info, doesOpenLast = true) {
 					$page.hide();
 				},
 				(err) => {
-					helpers.error(err);
+					if (!isPickerCancelled(err)) helpers.error(err);
 				},
 			);
 		}
@@ -1467,14 +1469,14 @@ function FileBrowserInclude(mode, info, doesOpenLast = true) {
 				});
 			}
 
-			if (IS_FILE_MODE) {
+			if (IS_FILE_MODE || IS_FOLDER_MODE) {
 				util.pushFolder(allStorages, SELECT_DOCUMENT_LABEL, null, {
 					openDoc: true,
 					notSelectable: true,
 				});
 			}
 
-			return allStorages;
+			return orderStorageEntries(allStorages);
 		}
 
 		/**
@@ -1534,7 +1536,7 @@ function FileBrowserInclude(mode, info, doesOpenLast = true) {
 					url,
 					name,
 					scroll: 0,
-					list: helpers.sortDir(list, fileBrowser, mode),
+					list: url === "/" ? list : helpers.sortDir(list, fileBrowser, mode),
 				};
 			}
 		}

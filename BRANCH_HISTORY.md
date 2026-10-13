@@ -64,3 +64,13 @@
 - APK：[下载测试 APK 压缩包](https://github.com/fresheon/AcodePlanB/actions/runs/38418109642/artifacts/11826845052)（解压后安装）。
 - APK 源码提交：`091d0d0a8ae66cee0f33f3bc94ca7f4b1e974bc8`。
 - 签名限制：无原密钥，仍不保证覆盖安装。
+
+## 006 — 文件浏览器排序、取消提示与方案导出修复（2026-10-13）
+
+- 分支：`fix/browser-order-profile-export`
+- 基于：`fix/folder-picker-profile-controls`（`a159c72a283c5dfc199ffe46d7e0ab6643ae7f32`）。
+- 修改：系统文件/目录选择取消静默处理；首页固定 Select document、Internal Storage、分隔线，剩余目录按名称升序；移除文件夹图标上的存储类型白字。
+- 导出：保留 Url.join 对象上下文，修复 undefined.parse，写入用户授权目录并提示保存成功。导出格式为无扩展名的 JSON 纯文本，可用文本编辑器修改，需保持 JSON 语法；本版本没有方案导入功能。
+- 方案：有已保存或临时方案时不显示空白选项，拒绝空白切换，修复旧会话的空白选择并应用第一个已保存方案。
+- 验证：待记录构建测试及签名、权限核验。
+- APK：待补充。

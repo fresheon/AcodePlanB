@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createEditorProfileManager, editorProfileKeys, TEMP_PROFILE_ID, TEMP_PROFILE_NAME, writeEditorProfileExport } from "lib/editorProfiles";
+import Url from "../../src/utils/Url.js";
 export function fakeSettings() {
   const events = new Map();
   return { value: Object.fromEntries(editorProfileKeys.map(key => [key, key === "fontSize" ? "18px" : null])),
@@ -89,7 +90,7 @@ describe("editor layout profiles", () => {
     expect(manager.state.temporary.settings.fontSize).toBe("28px");
     expect(manager.exportData(true).profiles.map(p => p.name)).toEqual(["*未保存-A", "A"]);
     expect(manager.exportData(false).profiles).toHaveLength(1);
-    await manager.select(""); expect(() => manager.exportData()).toThrow();
+    await expect(manager.select("")).rejects.toThrow("请选择已有方案"); expect(manager.current.id).toBe(a.id);
   });
   it("deletes the selected saved profile and applies the next one", async () => {
     const { settings, manager } = setup(); await manager.start(); manager.save("A"); await settings.update({ fontSize: "23px" }); manager.save("B");
@@ -103,4 +104,15 @@ describe("editor layout profiles", () => {
     expect(name).toBe("AcodeEditorSetting2"); expect(files.get("dir/AcodeEditorSetting")).toBe("old");
     expect(JSON.parse(files.get("dir/AcodeEditorSetting2")).format).toBe("AcodeEditorSetting");
   });
+});
+
+it("recovers an old blank selection and applies the first saved font settings", async () => {
+ localStorage.setItem("acode-editor-profiles-v1", JSON.stringify({profiles:[{id:"a",name:"A",settings:{fontSize:"24px",editorFont:"Roboto Mono"}}],active:"",temporary:null}));
+ const {settings,manager}=setup(); await manager.start(); expect(manager.current.id).toBe("a"); expect(settings.value.fontSize).toBe("24px"); expect(settings.value.editorFont).toBe("Roboto Mono");
+});
+it("exports JSON through the real SAF URI join method", async () => {
+ const folder="content://com.android.externalstorage.documents/tree/primary%3ADocuments"; const files=new Map();
+ const fs=uri=>({exists:async()=>files.has(uri),createFile:async name=>Url.join(uri,name),writeFile:async data=>files.set(uri,data)});
+ await writeEditorProfileExport(folder,{format:"AcodeEditorSetting",profiles:[{name:"A",settings:{fontSize:"24px"}}]},fs,(...parts)=>Url.join(...parts));
+ expect(JSON.parse(files.get(Url.join(folder,"AcodeEditorSetting"))).profiles[0].settings.fontSize).toBe("24px");
 });

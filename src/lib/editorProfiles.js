@@ -69,10 +69,14 @@ export function createEditorProfileManager({ settings, storage = localStorage, p
         write();
         await apply(current()?.settings || defaults);
       } else if (current()) await apply(current().settings);
-      else state.active = "";
+      else {
+        state.active = state.profiles[0]?.id || "";
+        if (current()) await apply(current().settings);
+      }
       write(); notify();
     },
     async select(id) {
+      if (!id && (state.profiles.length || state.temporary)) throw new Error("请选择已有方案");
       if (id && id !== TEMP_PROFILE_ID && !state.profiles.some(p => p.id === id)) throw new Error("方案不存在");
       if (id === TEMP_PROFILE_ID && !state.temporary) throw new Error("临时方案不存在");
       state.active = id; write();

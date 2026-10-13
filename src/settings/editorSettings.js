@@ -453,7 +453,10 @@ export default function editorSettings() {
 				]);
 				let folder;
 				try { folder = await FileBrowser("folder", strings["select folder"]); } catch { return; }
-				if (folder?.url) await writeEditorProfileExport(folder.url, payload, fsOperation, Url.join);
+				if (folder?.url) {
+					await writeEditorProfileExport(folder.url, payload, fsOperation, (...parts) => Url.join(...parts));
+					toast(strings.success || "保存成功");
+				}
 			},
 		});
 		page.insertAfterSection("resetEditorAppearance", row.element);

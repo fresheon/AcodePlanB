@@ -55,7 +55,7 @@ const { chromium } = require("playwright");
     assert.equal(deletion.gap, 50); assert(Math.abs(deletion.buttonWidth - (28+12)*4/3) < 1); assert.equal(deletion.characterGap,14);
     await page.getByRole("dialog").getByRole("button", { name: "取消", exact: true }).tap(); assert.equal(await choose.locator("option:checked").textContent(), "方案A");
     await button("删除").tap(); await page.getByRole("dialog").getByRole("button", { name: "删除", exact: true }).tap(); assert.equal(await choose.locator("option:checked").textContent(), "方案B");
-    await button("另存为").tap(); await page.getByRole("dialog").getByRole("button", { name: "取消", exact: true }).tap(); assert.equal(await choose.locator("option").count(), 2);
+    await button("另存为").tap(); await page.getByRole("dialog").getByRole("button", { name: "取消", exact: true }).tap(); assert.equal(await choose.locator("option").count(), 1); assert.equal(await choose.locator('option[value=""]').count(),0);
     for (const viewport of [{width:320,height:732}, {width:1280,height:800}]) {
       await page.setViewportSize(viewport);
       const bounds = await page.locator(".editor-profiles-row").evaluate(row => {

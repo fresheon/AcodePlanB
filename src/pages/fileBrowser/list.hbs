@@ -1,6 +1,7 @@
 <ul class="list" id="list" empty-msg="{{msg}}">{{#list}}
   {{#.}}
-  <li
+  {{#separator}}<li class="storage-separator" role="separator"></li>{{/separator}}
+  {{^separator}}<li
     tabindex="1"
     class="tile {{#isLink}}symlink{{/isLink}}"
     data-action="open"
@@ -23,7 +24,7 @@
       <span>{{name}}</span>
     </div>
     <data-url>{{url}}</data-url>
-  </li>
+  </li>{{/separator}}
   {{/.}}
   {{/list}}
 </ul>

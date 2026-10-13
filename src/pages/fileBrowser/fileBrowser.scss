@@ -35,17 +35,7 @@
       position: relative;
       color: rgb(65, 85, 133);
 
-      &[data-storage-type]::after {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        content: attr(data-storage-type);
-        transform: translate(-50%, -50%);
-        color: rgb(255, 255, 255);
-        font-size: 0.6rem;
-        font-weight: 600;
-        text-transform: uppercase;
-      }
+
 
       &.clearclose {
         color: currentColor;
@@ -144,3 +134,5 @@
     }
   }
 }
+
+#file-browser .storage-separator, .list > .storage-separator { height: 1px; min-height: 1px; padding: 0; margin: 8px 0; background: var(--border-color, #888); pointer-events: none; }

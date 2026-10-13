@@ -1,4 +1,5 @@
 // Use the existing SAF grant; no broad storage permission is required.
+export const isPickerCancelled = error => /cancelled|canceled/i.test(String(error?.message || error));
 export function pickSystemFolder(sdcard) {
   return new Promise((resolve, reject) => {
     sdcard.getStorageAccessPermission("", uri => {
@@ -7,7 +8,7 @@ export function pickSystemFolder(sdcard) {
       try { name = decodeURIComponent(uri).split(":").pop().split("/").pop(); } catch { name = ""; }
       resolve({ type: "folder", url: uri, name: name || "Internal storage" });
     }, error => {
-      if (/cancelled|canceled/i.test(String(error?.message || error))) resolve(null);
+      if (isPickerCancelled(error)) resolve(null);
       else reject(error);
     });
   });

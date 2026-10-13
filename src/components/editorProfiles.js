@@ -44,7 +44,8 @@ export default function editorProfilesRow({ manager, dialog = editorProfileDialo
   const buttons = {};
   function render() {
     const state = manager.state;
-    select.replaceChildren(new Option("", ""));
+    select.replaceChildren();
+    if (!state.profiles.length && !state.temporary) select.add(new Option("", ""));
     if (state.temporary) select.add(new Option(state.temporary.name, TEMP_PROFILE_ID));
     for (const profile of state.profiles) select.add(new Option(profile.name, profile.id));
     select.value = state.active;

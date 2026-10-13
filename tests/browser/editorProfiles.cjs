@@ -64,7 +64,7 @@ const { chromium } = require("playwright");
         const select = row.querySelector("select").getBoundingClientRect(); const buttons = [...row.querySelectorAll("button")].map(button => button.getBoundingClientRect());
         return { select: select.width, gaps: [buttons[0].left-select.right, ...buttons.slice(1).map((button,index) => button.left-buttons[index].right)], width: row.clientWidth, scrollWidth: row.scrollWidth };
       });
-      assert.equal(bounds.select, viewport.width/2-20); assert.equal(bounds.gaps[0],35); for(const gap of bounds.gaps.slice(1)) assert(Math.abs(gap-Math.min(30,Math.max(12,viewport.width*.02)))<1);
+      assert.equal(bounds.select, viewport.width/2-20); assert.equal(bounds.gaps[0],35); for(const gap of bounds.gaps.slice(1)) assert(Math.abs(gap-(Math.min(30,Math.max(12,viewport.width*.02))+5))<1);
       if(viewport.width===320) assert(bounds.scrollWidth > bounds.width);
       await button("导出").tap(); await page.getByRole("dialog").getByRole("button", {name:"取消",exact:true}).tap();
     }

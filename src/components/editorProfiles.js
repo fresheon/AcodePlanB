@@ -36,7 +36,7 @@ export function editorProfileDialog({ title, input = false, choices, validate, a
     if (input) field.focus(); else actions.firstElementChild.focus();
   });
 }
-export default function editorProfilesRow({ manager, dialog = editorProfileDialog, exportToFolder, refresh = () => {} }) {
+export default function editorProfilesRow({ manager, dialog = editorProfileDialog, exportToFolder, importFromFile, refresh = () => {} }) {
   const row = document.createElement("div"); row.className = "editor-profiles-row"; row.dataset.key = "editorProfiles";
   const label = document.createElement("div"); label.className = "editor-profiles-heading"; label.textContent = "保存视觉方案";
   const container = document.createElement("div"); container.className = "editor-profiles-container"; container.append(label, row); container.dataset.key = "editorProfiles";
@@ -67,6 +67,7 @@ export default function editorProfilesRow({ manager, dialog = editorProfileDialo
     if (name !== null) manager.save(name);
   }
   const handlers = {
+    import: async () => { const text = await importFromFile(); if (text != null) { await manager.importData(text); refresh(); } },
     delete: async () => {
       if (await dialog({ title: `删除方案“${manager.current.name}”？`, variant: "delete", choices: [["取消", false], ["删除", true]] })) { await manager.removeCurrent(); refresh(); }
     },
@@ -77,7 +78,7 @@ export default function editorProfilesRow({ manager, dialog = editorProfileDialo
       if (choice !== null) await exportToFolder(manager.exportData(choice === "all"));
     },
   };
-  for (const [key, text] of [["delete", "删除"], ["save", "保存"], ["saveAs", "另存为"], ["export", "导出"]]) {
+  for (const [key, text] of [["delete", "删除"], ["save", "保存"], ["saveAs", "另存为"], ["export", "导出"], ["import", "导入"]]) {
     const button = document.createElement("button"); button.type = "button"; button.textContent = text;
     button.onclick = () => run(handlers[key]); buttons[key] = button; actions.append(button);
   }

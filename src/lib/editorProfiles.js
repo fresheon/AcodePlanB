@@ -115,6 +115,26 @@ export function createEditorProfileManager({ settings, storage = localStorage, p
       const profiles = all ? [state.temporary, ...state.profiles].filter(Boolean) : [current()];
       return { format: "AcodeEditorSetting", version: 1, profiles: profiles.map(p => ({ name: p.name, settings: clone(p.settings) })) };
     },
+    async importData(text) {
+      let data;
+      try { data = JSON.parse(text); } catch { throw new Error("方案文件不是有效的 JSON"); }
+      if (data?.format !== "AcodeEditorSetting" || data.version !== 1 || !Array.isArray(data.profiles) || !data.profiles.length) throw new Error("不是有效的视觉方案文件");
+      const names = new Set(state.profiles.map(p => p.name));
+      const imported = data.profiles.map(p => {
+        if (!p || typeof p.name !== "string" || !p.name.trim() || !p.settings || typeof p.settings !== "object" || Array.isArray(p.settings)) throw new Error("方案内容不完整");
+        for (const key of editorProfileKeys) {
+          const value = p.settings[key], reference = defaults[key] ?? settings.value[key];
+          if (value === undefined) continue;
+          if (value === null && (reference == null || /Color|Padding/.test(key))) continue;
+          if (!["string", "number", "boolean"].includes(typeof value) || (typeof value === "number" && !Number.isFinite(value)) || (reference != null && typeof value !== typeof reference)) throw new Error(`方案设置无效：${key}`);
+        }
+        const base = p.name === TEMP_PROFILE_NAME ? "导入方案" : p.name.replace(/^\*未保存-/, "").trim();
+        let name = base, number = 2; while (names.has(name)) name = `${base} (${number++})`; names.add(name);
+        return { id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`, name, settings: profileSettings(p.settings, { ...defaults, ...settings.value }) };
+      });
+      state.profiles.push(...imported); write();
+      await manager.select(imported[0].id); return imported.length;
+    },
     dispose() { for (const key of editorProfileKeys) settings.off(`update:${key}`, markChanged); listeners.clear(); },
   };
   return manager;

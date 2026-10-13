@@ -5,8 +5,8 @@ wc-page.editor-profiles-settings-page {
 .editor-profiles-heading { padding: 12px 8px 0; font-size: 14px; }
 .editor-profiles-row {
   display: flex; align-items: center; gap: 35px; padding: 12px 8px; box-sizing: border-box; width: 100%; overflow-x: auto;
-  .editor-profiles-select { flex: 0 0 50vw; width: 50vw; max-width: 50vw; min-width: 0; box-sizing: border-box; height: 34px; font-size: 12px; color: var(--primary-text-color, inherit); background: var(--secondary-color); border: 1px solid var(--border-color, #888); border-radius: 4px; }
-  .editor-profiles-actions { display: flex; flex: 0 0 auto; min-width: 0; gap: 35px; justify-content: flex-start; }
+  .editor-profiles-select { flex: 0 0 calc(50vw - 20px); width: calc(50vw - 20px); max-width: calc(50vw - 20px); min-width: 0; box-sizing: border-box; height: 34px; font-size: 12px; color: var(--primary-text-color, inherit); background: var(--secondary-color); border: 1px solid var(--border-color, #888); border-radius: 4px; }
+  .editor-profiles-actions { display: flex; flex: 0 0 auto; min-width: 0; gap: clamp(12px, 2vw, 30px); justify-content: flex-start; }
   button { min-width: 0; margin: 0; letter-spacing: normal; flex: 0 0 auto; font: inherit; font-size: 12px; white-space: nowrap; padding: 8px 3px; border: 0; border-radius: 3px; background: var(--secondary-color); color: inherit; }
   button:disabled { opacity: .4; }
 }

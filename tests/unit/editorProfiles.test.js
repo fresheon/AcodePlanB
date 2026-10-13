@@ -116,3 +116,11 @@ it("exports JSON through the real SAF URI join method", async () => {
  await writeEditorProfileExport(folder,{format:"AcodeEditorSetting",profiles:[{name:"A",settings:{fontSize:"24px"}}]},fs,(...parts)=>Url.join(...parts));
  expect(JSON.parse(files.get(Url.join(folder,"AcodeEditorSetting"))).profiles[0].settings.fontSize).toBe("24px");
 });
+
+it("imports exported profiles without overwriting names and rejects invalid files atomically",async()=>{
+ const {manager,settings}=setup(); await manager.start(); manager.save("A");
+ const text=JSON.stringify(manager.exportData()); await manager.importData(text);
+ expect(manager.current.name).toBe("A (2)"); expect(manager.state.profiles).toHaveLength(2);
+ await expect(manager.importData('{"format":"bad"}')).rejects.toThrow(); expect(manager.state.profiles).toHaveLength(2);
+ expect(settings.value.fontSize).toBe("18px");
+});

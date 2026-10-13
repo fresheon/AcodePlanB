@@ -103,6 +103,7 @@ document.addEventListener("pause", pauseHandler);
 document.addEventListener("resume", resumeHandler);
 document.addEventListener("visibilitychange", () => {
 	if (document.hidden) window.acode?.exec("save-state");
+	else requestAnimationFrame(() => { window.dispatchEvent(new Event("resize")); window.editorManager?.editor?.requestMeasure?.(); });
 });
 window.addEventListener("pagehide", () => window.acode?.exec("save-state"));
 document.addEventListener("keydown", keyboardHandler);
@@ -1039,6 +1040,10 @@ async function pauseHandler() {
 }
 
 function resumeHandler() {
+	requestAnimationFrame(() => {
+		window.dispatchEvent(new Event("resize"));
+		window.editorManager?.editor?.requestMeasure?.();
+	});
 	adRewards.handleResume();
 	if (!settings.value.checkFiles) return;
 	checkFiles();

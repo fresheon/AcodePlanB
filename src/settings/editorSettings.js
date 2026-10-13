@@ -458,6 +458,11 @@ export default function editorSettings() {
 					toast(strings.success || "保存成功");
 				}
 			},
+			importFromFile: async () => {
+				const [{ default: FileBrowser }, { default: fsOperation }] = await Promise.all([import("pages/fileBrowser"), import("fileSystem")]);
+				let file; try { file = await FileBrowser("file", "选择视觉方案文件"); } catch (error) { if (error.code === 0) return null; throw error; }
+				return file?.url ? fsOperation(file.url).readFile("utf8") : null;
+			},
 		});
 		page.insertAfterSection("resetEditorAppearance", row.element);
 		page.onClose(row.destroy);

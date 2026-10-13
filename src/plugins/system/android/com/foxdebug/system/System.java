@@ -87,6 +87,22 @@ public class System extends CordovaPlugin {
   private int savedEditorBars;
   private int savedEditorBehavior;
   private View editorStatusBarBackground;
+  private View navigationBackground;
+
+  private void updateNavigationBackground() {
+    View decor = activity.getWindow().getDecorView();
+    if (!(decor instanceof android.widget.FrameLayout)) return;
+    WindowInsetsCompat insets = androidx.core.view.ViewCompat.getRootWindowInsets(decor);
+    int height = insets == null ? 0 : insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom;
+    if (navigationBackground == null) {
+      navigationBackground = new View(activity);
+      navigationBackground.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+      ((android.widget.FrameLayout) decor).addView(navigationBackground);
+    }
+    navigationBackground.setBackgroundColor(systemBarColor);
+    navigationBackground.setLayoutParams(new android.widget.FrameLayout.LayoutParams(-1, height, android.view.Gravity.BOTTOM));
+    navigationBackground.setVisibility(editorImmersive || height == 0 ? View.GONE : View.VISIBLE);
+  }
   private int savedEditorStatusVisibility;
   private boolean savedEditorFullscreenFlag;
 
@@ -125,6 +141,7 @@ public class System extends CordovaPlugin {
       if (SDK_INT < 30) decor.setSystemUiVisibility(savedEditorSystemUi);
     }
     editorImmersive = enabled;
+    decor.post(() -> updateNavigationBackground());
     // Re-run Cordova's margin calculation after changing the background view.
     androidx.core.view.ViewCompat.requestApplyInsets(webView.getView());
     androidx.core.view.ViewCompat.requestApplyInsets(decor);
@@ -133,6 +150,16 @@ public class System extends CordovaPlugin {
   @Override
   public void onResume(boolean multitasking) {
     super.onResume(multitasking);
+    activity.runOnUiThread(() -> {
+      View view = webView.getView();
+      view.post(() -> {
+        if (!webView.isShowingCustomView()) view.setVisibility(View.VISIBLE);
+        view.requestLayout(); view.invalidate();
+        androidx.core.view.ViewCompat.requestApplyInsets(view);
+        updateNavigationBackground();
+      });
+      activity.getWindow().getDecorView().postDelayed(() -> updateNavigationBackground(), 200);
+    });
     if (theme != null) activity.runOnUiThread(() -> applySystemBarTheme());
     if (editorImmersive) activity.runOnUiThread(() -> setEditorImmersive(true));
   }
@@ -1976,6 +2003,7 @@ public class System extends CordovaPlugin {
 
     setStatusBarStyle(window);
     setNavigationBarStyle(window);
+    decorView.post(() -> updateNavigationBackground());
   }
 
   private void setStatusBarStyle(final Window window) {

@@ -16,7 +16,7 @@ window.setupEditorProfiles = async () => {
   let row;
   const mount = () => {
     row?.destroy(); row?.element.remove();
-    row = editorProfilesRow({ manager, exportToFolder: async payload => { folderVisits++; await writeEditorProfileExport("chosen", payload, fs, (a,b) => a+"/"+b); } });
+    row = editorProfilesRow({ manager, importFromFile: async () => JSON.stringify({format:"AcodeEditorSetting",version:1,profiles:[{name:"导入方案",settings:{fontSize:"26px"}}]}), exportToFolder: async payload => { folderVisits++; await writeEditorProfileExport("chosen", payload, fs, (a,b) => a+"/"+b); } });
     document.body.append(row.element);
   };
   mount();

@@ -26,7 +26,7 @@ const { chromium } = require("playwright");
     const choose = page.getByRole("combobox", { name: "方案框" });
     const button = text => page.locator(".editor-profiles-actions").getByRole("button", { name: text, exact: true });
     assert.equal(await choose.inputValue(), ""); assert(await button("删除").isDisabled()); assert(await button("导出").isDisabled());
-    const width = await choose.evaluate(el => el.getBoundingClientRect().width); assert.equal(width, 206);
+    const width = await choose.evaluate(el => el.getBoundingClientRect().width); assert.equal(width, 186);
     await button("保存").tap(); await page.getByRole("textbox", { name: "方案名称" }).fill("方案A"); await page.getByRole("dialog").getByRole("button", { name: "确定", exact: true }).tap();
     assert.equal(await choose.locator("option:checked").textContent(), "方案A");
     await page.evaluate(() => profiles.settings.update({ fontSize: "24px", editorPaddingTop: 47 }));
@@ -64,10 +64,14 @@ const { chromium } = require("playwright");
         const select = row.querySelector("select").getBoundingClientRect(); const buttons = [...row.querySelectorAll("button")].map(button => button.getBoundingClientRect());
         return { select: select.width, gaps: [buttons[0].left-select.right, ...buttons.slice(1).map((button,index) => button.left-buttons[index].right)], width: row.clientWidth, scrollWidth: row.scrollWidth };
       });
-      assert.equal(bounds.select, viewport.width/2); for(const gap of bounds.gaps) assert.equal(gap,35);
+      assert.equal(bounds.select, viewport.width/2-20); assert.equal(bounds.gaps[0],35); for(const gap of bounds.gaps.slice(1)) assert(Math.abs(gap-Math.min(30,Math.max(12,viewport.width*.02)))<1);
       if(viewport.width===320) assert(bounds.scrollWidth > bounds.width);
       await button("导出").tap(); await page.getByRole("dialog").getByRole("button", {name:"取消",exact:true}).tap();
     }
-    console.log("Editor profiles browser checks passed: real naming/cancel/duplicate/save/save-as/delete/export controls, process-scoped temporary settings, JSON exports and phone/tablet layout.");
+    await button("导入").tap();
+    await page.waitForFunction(() => profiles.manager.current.name === "导入方案");
+    assert.equal(await choose.locator("option:checked").textContent(), "导入方案");
+    assert.equal(await page.evaluate(() => profiles.settings.value.fontSize), "26px");
+    console.log("Editor profiles browser checks passed: real naming/cancel/duplicate/save/save-as/delete/export/import controls, process-scoped temporary settings, JSON exports and phone/tablet layout.");
   } finally { await browser?.close(); fs.rmSync(temporary, { recursive: true, force: true }); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

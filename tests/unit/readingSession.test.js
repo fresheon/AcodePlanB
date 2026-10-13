@@ -33,10 +33,18 @@ describe("durable reading sessions", () => {
   });
   it("does not recapture a restored viewport on synthetic scroll or repeated tab switches", () => {
     const view = viewAt(80); const file = { id: "two", type: "editor", loaded: true, readingPosition: { from: 120, offset: -3, left: 0 } };
-    view.__readingPositionRestored = { fileId: file.id, top: view.scrollDOM.scrollTop, left: 0 };
+    view.__readingPositionRestored = { fileId: file.id, doc: view.state.doc, top: view.scrollDOM.scrollTop, left: 0 };
     persistReadingPosition(file, view);
     expect(file.readingPosition.from).toBe(120);
     view.scrollDOM.scrollTop += 20;
+    persistReadingPosition(file, view);
+    expect(file.readingPosition.from).toBe(80);
+  });
+  it("a document edit invalidates the restored checkpoint even without pixel scrolling", () => {
+    const view = viewAt(80);
+    const file = { id: "two", type: "editor", loaded: true, readingPosition: { from: 120, offset: -3, left: 0 } };
+    view.__readingPositionRestored = { fileId: file.id, doc: view.state.doc, top: view.scrollDOM.scrollTop, left: 0 };
+    view.state = view.state.update({ changes: { from: 0, insert: "new text" } }).state;
     persistReadingPosition(file, view);
     expect(file.readingPosition.from).toBe(80);
   });

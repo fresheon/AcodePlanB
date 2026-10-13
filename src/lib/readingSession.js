@@ -43,7 +43,7 @@ export function persistReadingPosition(file, view, storage = localStorage) {
   if (file.session?.doc && file.session.doc !== view.state.doc) return;
   const restored = view.__readingPositionRestored;
   if (validReadingPosition(file.readingPosition) && restored?.fileId === file.id &&
-      restored.top === view.scrollDOM.scrollTop && restored.left === view.scrollDOM.scrollLeft) return;
+      restored.doc === view.state.doc && restored.top === view.scrollDOM.scrollTop && restored.left === view.scrollDOM.scrollLeft) return;
   const position = captureReadingPosition(view);
   if (!position) return;
   file.readingPosition = position;
@@ -81,7 +81,7 @@ export function restoreReadingPosition(view, file, isCurrent, done = () => {}) {
           file.lastScrollTop = view.scrollDOM.scrollTop;
           file.lastScrollLeft = view.scrollDOM.scrollLeft;
           view.__readingPositionRestored = {
-            fileId: file.id, top: file.lastScrollTop, left: file.lastScrollLeft,
+            fileId: file.id, doc: view.state.doc, top: file.lastScrollTop, left: file.lastScrollLeft,
           };
         }
         file.__readingRestorePending = false;

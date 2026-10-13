@@ -177,6 +177,8 @@ public class System extends CordovaPlugin {
     WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, decor);
     controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_DEFAULT);
     controller.show(WindowInsetsCompat.Type.navigationBars());
+    setStatusBarStyle(window);
+    setNavigationBarStyle(window);
   }
 
   private void editorStatus(CallbackContext callback) throws JSONException {
@@ -2022,87 +2024,18 @@ public class System extends CordovaPlugin {
     decorView.post(() -> updateNavigationBackground());
   }
 
+  private boolean systemBarBackgroundIsLight() {
+    return androidx.core.graphics.ColorUtils.calculateLuminance(systemBarColor) > 0.5;
+  }
+
   private void setStatusBarStyle(final Window window) {
-    String themeType = theme.getType();
-    View decorView = window.getDecorView();
-    int uiOptions;
-    int lightStatusBar;
-
-    if (SDK_INT <= 30) {
-      uiOptions = getDeprecatedSystemUiVisibility(decorView);
-      lightStatusBar = deprecatedFlagUiLightStatusBar();
-
-      if (themeType.equals("light")) {
-        setDeprecatedSystemUiVisibility(decorView, uiOptions | lightStatusBar);
-        return;
-      }
-      setDeprecatedSystemUiVisibility(decorView, uiOptions & ~lightStatusBar);
-      return;
-    }
-
-    uiOptions = Objects.requireNonNull(
-      decorView.getWindowInsetsController()
-    ).getSystemBarsAppearance();
-    lightStatusBar = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
-
-    if (themeType.equals("light")) {
-      decorView
-        .getWindowInsetsController()
-        .setSystemBarsAppearance(uiOptions | lightStatusBar, lightStatusBar);
-      return;
-    }
-
-    decorView
-      .getWindowInsetsController()
-      .setSystemBarsAppearance(uiOptions & ~lightStatusBar, lightStatusBar);
+    WindowCompat.getInsetsController(window, window.getDecorView())
+      .setAppearanceLightStatusBars(systemBarBackgroundIsLight());
   }
 
   private void setNavigationBarStyle(final Window window) {
-    String themeType = theme.getType();
-    View decorView = window.getDecorView();
-    int uiOptions;
-    int lightNavigationBar;
-
-    if (SDK_INT <= 30) {
-      uiOptions = getDeprecatedSystemUiVisibility(decorView);
-      lightNavigationBar = View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-
-      if (themeType.equals("light")) {
-        setDeprecatedSystemUiVisibility(
-          decorView,
-          uiOptions | lightNavigationBar
-        );
-        return;
-      }
-      setDeprecatedSystemUiVisibility(
-        decorView,
-        uiOptions & ~lightNavigationBar
-      );
-      return;
-    }
-
-    uiOptions = Objects.requireNonNull(
-      decorView.getWindowInsetsController()
-    ).getSystemBarsAppearance();
-    lightNavigationBar =
-      WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
-
-    if (themeType.equals("light")) {
-      decorView
-        .getWindowInsetsController()
-        .setSystemBarsAppearance(
-          uiOptions | lightNavigationBar,
-          lightNavigationBar
-        );
-      return;
-    }
-
-    decorView
-      .getWindowInsetsController()
-      .setSystemBarsAppearance(
-        uiOptions & ~lightNavigationBar,
-        lightNavigationBar
-      );
+    WindowCompat.getInsetsController(window, window.getDecorView())
+      .setAppearanceLightNavigationBars(systemBarBackgroundIsLight());
   }
 
   private int deprecatedFlagUiLightStatusBar() {

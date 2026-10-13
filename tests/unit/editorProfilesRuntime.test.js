@@ -4,7 +4,7 @@ it("imports without traversing settings dependencies and initializes only with t
   vi.resetModules(); localStorage.clear();
   const runtime = await import("../../src/lib/editorProfilesRuntime.js");
   expect(runtime.getEditorProfiles()).toBeUndefined();
-  const settings = { value: { fontSize: "12px" }, defaults: { fontSize: "12px" }, on: vi.fn(), update: vi.fn() };
+  const settings = { value: { fontSize: "12px" }, defaults: { fontSize: "12px" }, on: vi.fn(), off: vi.fn(), update: vi.fn() };
   const fonts = { injectFontFace: vi.fn() };
   window.cordova = { exec: vi.fn(resolve => resolve("native-process")) };
   const manager = await runtime.initializeEditorProfiles({ settings, fonts });

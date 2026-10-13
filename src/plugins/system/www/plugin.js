@@ -205,7 +205,7 @@ module.exports = {
     }
 
     cordova.exec((out) => {
-      window.statusbar.setBackgroundColor(systemBarColor);
+      window.statusbar.setBackgroundColor(theme && theme.type === "dark" ? "#f5f5f5" : systemBarColor);
 
       if (typeof onSuccess === "function") {
         onSuccess(out);

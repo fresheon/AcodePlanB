@@ -517,3 +517,6 @@ header.tile > .editor-reading-button:not(:disabled) {
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m4 14 10-10 4 4L8 18H4zm12-12a1 1 0 0 1 1.4 0l3.6 3.6a1 1 0 0 1 0 1.4l-1.6 1.6-5-5zM3 21h18v2H3z'/%3E%3C/svg%3E");
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m4 14 10-10 4 4L8 18H4zm12-12a1 1 0 0 1 1.4 0l3.6 3.6a1 1 0 0 1 0 1.4l-1.6 1.6-5-5zM3 21h18v2H3z'/%3E%3C/svg%3E");
 }
+
+body.app-dark-status-mode > wc-page { top: 23px; height: calc(100% - 23px); }
+#editor-fullscreen-status .editor-fullscreen-progress[hidden] { display: none; }

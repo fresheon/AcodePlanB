@@ -114,7 +114,10 @@ export default function editorReadingControls({
 			minute: "2-digit",
 		});
 		const pane = fullscreenPane;
-		if (!pane) return;
+		if (!pane) {
+			status.style.color = "#f5f5f5";
+			status.style.setProperty("--editor-status-background", getComputedStyle(document.body).getPropertyValue("--primary-color"));
+		} else {
 		refreshProgress();
 		status.style.color = getComputedStyle(
 			pane.editor?.contentDOM || pane.element,
@@ -122,6 +125,7 @@ export default function editorReadingControls({
 		status.style.setProperty("--editor-status-background", getComputedStyle(
 			pane.editor?.dom || pane.element,
 		).backgroundColor);
+		}
 		native("editor-status", [], (data) => {
 			if (fullscreenPane !== pane) return;
 			if (Number.isFinite(data.battery)) {
@@ -131,7 +135,22 @@ export default function editorReadingControls({
 			}
 		});
 	}
-	let fullscreenPane = null;
+	function syncNormalStatus() {
+        const dark = document.body.getAttribute("theme-type") === "dark";
+        const normal = dark && !fullscreenPane;
+        document.body.classList.toggle("app-dark-status-mode", normal);
+        progress.hidden = !fullscreenPane;
+        if (normal) {
+            document.body.append(status);
+            refreshStatus();
+            if (!statusTimer) statusTimer = setInterval(refreshStatus, 15000);
+        } else if (!fullscreenPane) {
+            status.remove(); clearInterval(statusTimer); statusTimer = null;
+        }
+    }
+    const themeObserver = new MutationObserver(syncNormalStatus);
+    themeObserver.observe(document.body, { attributes: true, attributeFilter: ["theme-type"] });
+    let fullscreenPane = null;
 	let placeholder = null;
 	let fullscreenFile = null;
 
@@ -218,7 +237,7 @@ export default function editorReadingControls({
 		pane.element.classList.remove("editor-content-fullscreen");
 		document.body.classList.remove("editor-content-fullscreen-mode");
 		clearTimeout(hintTimer);
-		clearInterval(statusTimer);
+		clearInterval(statusTimer); statusTimer = null;
 		pane.editor?.scrollDOM?.removeEventListener("scroll", refreshProgress);
 		window.removeEventListener("resize", refreshProgress);
 		document.removeEventListener("pointerdown", onPointerDown, true);
@@ -264,6 +283,9 @@ export default function editorReadingControls({
 		native("editor-immersive", [true], () => pane.editor?.requestMeasure());
 		pane.editor?.scrollDOM?.addEventListener("scroll", refreshProgress, { passive: true });
 		window.addEventListener("resize", refreshProgress);
+		progress.hidden = false;
+		document.body.classList.remove("app-dark-status-mode");
+		clearInterval(statusTimer);
 		refreshStatus();
 		statusTimer = setInterval(refreshStatus, 15000);
 		showExitHint();
@@ -276,6 +298,7 @@ export default function editorReadingControls({
 		update();
 	}
 	function update() {
+		syncNormalStatus();
 		const file = manager.activeFile;
 		bookmarks.update();
 		bookmarkList.disabled = bookmarkAdd.disabled = !bookmarks.available();

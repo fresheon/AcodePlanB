@@ -99,7 +99,7 @@ public class System extends CordovaPlugin {
       navigationBackground.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       ((android.widget.FrameLayout) decor).addView(navigationBackground);
     }
-    navigationBackground.setBackgroundColor(systemBarColor);
+    navigationBackground.setBackgroundColor(navigationBarColor());
     navigationBackground.setLayoutParams(new android.widget.FrameLayout.LayoutParams(-1, height, android.view.Gravity.BOTTOM));
     navigationBackground.setVisibility(editorImmersive || height == 0 ? View.GONE : View.VISIBLE);
   }
@@ -142,6 +142,7 @@ public class System extends CordovaPlugin {
     }
     editorImmersive = enabled;
     showNormalNavigationBar();
+    applyNormalStatusPolicy();
     decor.post(() -> updateNavigationBackground());
     // Re-run Cordova's margin calculation after changing the background view.
     androidx.core.view.ViewCompat.requestApplyInsets(webView.getView());
@@ -1964,7 +1965,7 @@ public class System extends CordovaPlugin {
       this.systemBarColor = Color.parseColor(systemBarColor);
       this.theme = new Theme(scheme);
 
-      preferences.set("BackgroundColor", this.systemBarColor);
+      preferences.set("BackgroundColor", navigationBarColor());
       webView.getPluginManager().postMessage("updateSystemBars", null);
       applySystemBarTheme();
 
@@ -2015,13 +2016,39 @@ public class System extends CordovaPlugin {
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
       window.setStatusBarColor(this.systemBarColor);
-      window.setNavigationBarColor(this.systemBarColor);
+      window.setNavigationBarColor(navigationBarColor());
     }
 
     setStatusBarStyle(window);
     setNavigationBarStyle(window);
     showNormalNavigationBar();
+    applyNormalStatusPolicy();
     decorView.post(() -> updateNavigationBackground());
+  }
+
+  private int navigationBarColor() {
+    return theme != null && "dark".equals(theme.getType()) ? Color.rgb(245, 245, 245) : systemBarColor;
+  }
+
+  private void applyNormalStatusPolicy() {
+    if (editorImmersive || webView.isCustomViewShowing()) return;
+    Window window = activity.getWindow();
+    View decor = window.getDecorView();
+    boolean dark = theme != null && "dark".equals(theme.getType());
+    View background = decor.findViewWithTag("statusBarView");
+    WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(window, decor);
+    if (dark) {
+      window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+      if (background != null) background.setVisibility(View.GONE);
+      controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+      controller.hide(WindowInsetsCompat.Type.statusBars());
+    } else {
+      window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+      if (background != null) background.setVisibility(View.VISIBLE);
+      controller.show(WindowInsetsCompat.Type.statusBars());
+    }
+    controller.show(WindowInsetsCompat.Type.navigationBars());
+    androidx.core.view.ViewCompat.requestApplyInsets(webView.getView());
   }
 
   private boolean systemBarBackgroundIsLight() {
@@ -2035,7 +2062,7 @@ public class System extends CordovaPlugin {
 
   private void setNavigationBarStyle(final Window window) {
     WindowCompat.getInsetsController(window, window.getDecorView())
-      .setAppearanceLightNavigationBars(systemBarBackgroundIsLight());
+      .setAppearanceLightNavigationBars(androidx.core.graphics.ColorUtils.calculateLuminance(navigationBarColor()) > 0.5);
   }
 
   private int deprecatedFlagUiLightStatusBar() {

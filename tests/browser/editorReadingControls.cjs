@@ -788,6 +788,24 @@ async function run() {
       tabs.restarted.forEach((position, index) => assertTab(position, index, "restart with file 1 initially active"));
       for (const item of tabs.restartSwitches) assertTab(item.position, item.index, "shared-view switch after restart");
     }
+        await page.evaluate(() => document.body.setAttribute("theme-type", "dark"));
+        await page.waitForFunction(() => document.body.classList.contains("app-dark-status-mode"));
+        const normalStatus = await page.locator("#editor-fullscreen-status").evaluate(status => {
+          window.testStatusNode = status;
+          return [...status.querySelectorAll("time,.editor-fullscreen-battery,.editor-fullscreen-battery-percentage")].map(node => { const r=node.getBoundingClientRect(); return {left:r.left,top:r.top,width:r.width,height:r.height}; });
+        });
+        assert.equal(await page.locator("#editor-fullscreen-status").count(),1);
+        await page.evaluate(() => reading.control.enter());
+        const fullStatus = await page.locator("#editor-fullscreen-status").evaluate(status => {
+          if(status!==window.testStatusNode) throw Error("status elements were replaced");
+          return [...status.querySelectorAll("time,.editor-fullscreen-battery,.editor-fullscreen-battery-percentage")].map(node => { const r=node.getBoundingClientRect(); return {left:r.left,top:r.top,width:r.width,height:r.height}; });
+        });
+        assert.deepEqual(fullStatus,normalStatus);
+        await page.evaluate(() => reading.control.exit());
+        assert.equal(await page.locator("#editor-fullscreen-status").count(),1);
+        await page.evaluate(() => document.body.setAttribute("theme-type", "light"));
+        await page.waitForFunction(() => !document.body.classList.contains("app-dark-status-mode"));
+        assert.equal(await page.locator("#editor-fullscreen-status").count(),0);
 		console.log(
 			"Browser regression passed: real toolbar hit testing, both touch buttons, fullscreen exit, read-only selection guard, scrolling, editable text input, paging swipes, tap paging and paging disable.",
 		);

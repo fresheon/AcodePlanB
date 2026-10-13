@@ -10,6 +10,7 @@
 - 问题：正常关闭后恢复位置不准确；后台杀进程后回到第一页。
 - 修改：滚动时同步保存每个文件的顶部文字位置及偏移，不依赖退出回调；恢复位置以文字锚点为准，适配全屏与非全屏布局变化。
 - 行为：之前打开的文件重启后均以非全屏、只读模式恢复；手动关闭文件清除阅读位置，下次手动打开从头开始；路径失效的文件静默跳过，包括有缓存的文件。
-- 验证：针对性单元测试、浏览器重建两个文件的阅读位置及模式检查、APK 签名有效性和最终权限检查，结果见本次构建任务。
-- APK：本分支的 [GitHub Actions 构建记录](https://github.com/fresheon/AcodePlanB/actions?query=branch%3Afix%2Fpersistent-reading-session)，下载成功任务的 `acode-reading-progress-debug` 附件。
+- 验证：55 项针对性单元测试、类型检查、浏览器重建两个文件的阅读位置及模式检查全部通过；APK 签名有效性及最终权限检查通过，未新增权限。
+- APK：[下载测试 APK 压缩包](https://github.com/fresheon/AcodePlanB/actions/runs/38353242141/artifacts/11791743845)（解压后安装）。
+- APK 源码提交：`c5a9974015dada0de10e833584e702efaa0acff3`。
 - 签名限制：尚无原签名密钥，新安装包不保证覆盖安装；本次没有新增权限。

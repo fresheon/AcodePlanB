@@ -18,3 +18,17 @@ must pass signature verification as well as the final permission check.
 The user prioritizes conserving usage. Reuse the build pipeline, run focused
 tests for changed behavior, and avoid redundant broad checks or unnecessary
 tool calls. Keep progress messages brief and avoid frequent status polling.
+
+# Version history
+
+For every version modification, append an incrementally numbered entry to the
+same BRANCH_HISTORY.md in the new branch. Preserve existing entries. Record the
+branch, Beijing date, changes, behavior, validation and APK download link.
+
+# Reading session policy
+
+Persist each open editor document's measured reading anchor during scrolling,
+without relying on shutdown callbacks. Restore all editor tabs read-only and
+non-fullscreen. Do not overwrite the durable session during startup restoration.
+Manually closing a file clears its reading position; unavailable paths are
+skipped silently during restoration, even when cached text exists.

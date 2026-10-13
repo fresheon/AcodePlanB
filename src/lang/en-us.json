@@ -673,6 +673,7 @@
 	"settings-category-session": "Session",
 	"settings-category-support-acode": "Support Acode",
 	"settings-category-text-layout": "Text & layout",
+	"settings-category-font-presentation": "Font presentation",
 	"settings-category-tools": "Tools",
 	"settings-info-app-animation": "Control transition animations across the app.",
 	"settings-info-app-check-files": "Refresh editors when files change outside Acode.",

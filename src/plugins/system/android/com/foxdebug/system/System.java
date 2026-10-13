@@ -80,6 +80,7 @@ import org.json.JSONObject;
 public class System extends CordovaPlugin {
 
   private static final String TAG = "SystemPlugin";
+  private static final String EDITOR_PROCESS_SESSION = java.util.UUID.randomUUID().toString();
 
   private boolean editorImmersive = false;
   private int savedEditorSystemUi;
@@ -250,6 +251,9 @@ public class System extends CordovaPlugin {
       case "extractAsset":
       case "pin-file-shortcut":
         break;
+      case "editor-process-session":
+        callbackContext.success(EDITOR_PROCESS_SESSION);
+        return true;
       case "editor-status":
         editorStatus(callbackContext);
         return true;

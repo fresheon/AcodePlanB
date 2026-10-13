@@ -16,6 +16,7 @@ vi.mock("components/settingsPage", () => ({ default: (title, items, callback) =>
 	mocks.pages.push(page);
 	return page;
 } }));
+import { editorProfileKeys } from "lib/editorProfiles";
 import editorSettings from "../../src/settings/editorSettings";
 
 beforeEach(() => {
@@ -27,6 +28,17 @@ beforeEach(() => {
 });
 
 describe("editor appearance settings", () => {
+	it("distinguishes font presentation and includes exactly all three profile categories", () => {
+		const page = editorSettings();
+		const font = page.items.find(item => item.key === "editorFont").category;
+		const layout = page.items.find(item => item.key === "editorBackgroundColor").category;
+		const cursor = page.items.find(item => item.key === "cursorWidth").category;
+		expect(font).toBe("settings-category-font-presentation");
+		expect(font).not.toBe(layout);
+		const keys = page.items.filter(item => [font, layout, cursor].includes(item.category) && item.key !== "resetEditorAppearance").map(item => item.key).sort();
+		expect(keys).toEqual([...editorProfileKeys].sort());
+	});
+
 	it("accepts a numeric font size and stores the fixed px unit", () => {
 		mocks.value.fontSize = "18px";
 		const page = editorSettings();

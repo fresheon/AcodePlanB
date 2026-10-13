@@ -1,3 +1,4 @@
+import { initializeEditorProfiles } from "./lib/editorProfilesRuntime";
 import { forgetReadingPosition } from "./lib/readingSession";
 import "core-js/stable";
 import "html-tag-js/dist/polyfill";
@@ -319,6 +320,7 @@ async function onDeviceReady() {
 
 	acode.setLoadingMessage("Loading settings...");
 	await settings.init();
+	await initializeEditorProfiles();
 	fileIcons.bindSettings(settings);
 	fileIcons.syncFromSettings();
 	themes.init();

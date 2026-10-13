@@ -21,6 +21,7 @@ import searchBar from "./searchbar";
  * @property {(key:string)=>HTMLElement[]} search search for a setting
  * @property {(title:string)=>void} setTitle set title of settings page
  * @property {()=>void} restoreList restore list to original state
+ * @property {(key:string, element:HTMLElement)=>boolean} insertAfterSection insert a retained custom row after a section
  * @property {()=>HTMLDivElement} getListElement get the page's list element
  * @property {(key:string, visible:boolean)=>boolean} setItemVisibility show or hide one setting
  * @property {(callback:()=>void)=>()=>void} onClose register cleanup for when the page closes
@@ -129,6 +130,16 @@ export default function settingsPage(
 		 * Get this page's list element.
 		 * @returns {HTMLDivElement}
 		 */
+		insertAfterSection(key, element) {
+			const anchor = state.itemElements.get(key);
+			if (!anchor) return false;
+			const section = anchor.closest(".settings-section") || anchor;
+			const index = children.indexOf(section);
+			if (index < 0) return false;
+			children.splice(index + 1, 0, element);
+			$list.content = children;
+			return true;
+		},
 		getListElement() {
 			return $list;
 		},

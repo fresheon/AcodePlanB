@@ -1,3 +1,7 @@
+import editorProfilesRow, { editorProfileDialog } from "components/editorProfiles";
+import "components/editorProfiles.scss";
+import { getEditorProfiles } from "lib/editorProfilesRuntime";
+import { writeEditorProfileExport } from "lib/editorProfiles";
 import {
 	editorAppearanceKeys,
 	isValidEditorSpacing,
@@ -23,6 +27,7 @@ export default function editorSettings() {
 	const categories = {
 		scrolling: strings["settings-category-scrolling"],
 		textLayout: strings["settings-category-text-layout"],
+		fontPresentation: strings["settings-category-font-presentation"] || "Font presentation",
 		editing: strings["settings-category-editing"],
 		assistance: strings["settings-category-assistance"],
 		guidesIndicators: strings["settings-category-guides-indicators"],
@@ -158,7 +163,7 @@ export default function editorSettings() {
 				return fonts.getNames();
 			},
 			info: strings["settings-info-editor-font-family"],
-			category: categories.textLayout,
+			category: categories.fontPresentation,
 		},
 		{
 			key: "fontSize",
@@ -172,7 +177,7 @@ export default function editorSettings() {
 				test: (value) => /^\d+(?:\.\d+)?$/.test(String(value).trim()) && Number.isFinite(Number(value)) && Number(value) > 0,
 			},
 			info: strings["settings-info-editor-font-size"],
-			category: categories.textLayout,
+			category: categories.fontPresentation,
 		},
 		{
 			key: "lineHeight",
@@ -184,14 +189,14 @@ export default function editorSettings() {
 				test: isValidEditorLineHeight,
 			},
 			info: strings["settings-info-editor-line-height"],
-			category: categories.textLayout,
+			category: categories.fontPresentation,
 		},
 		{
 			key: "textWrap",
 			text: strings["text wrap"],
 			checkbox: values.textWrap,
 			info: strings["settings-info-editor-text-wrap"],
-			category: categories.textLayout,
+			category: categories.fontPresentation,
 		},
 		{
 			key: "wrappingIndent",
@@ -202,7 +207,7 @@ export default function editorSettings() {
 				wrappingIndentOptions[1][1],
 			select: wrappingIndentOptions,
 			info: strings["settings-info-editor-wrapping-indent"],
-			category: categories.textLayout,
+			category: categories.fontPresentation,
 		},
 		{
 			key: "autosave",
@@ -421,13 +426,40 @@ export default function editorSettings() {
 		},
 	];
 
-	return settingsPage(title, items, callback, undefined, {
+	const page = settingsPage(title, items, callback, undefined, {
 		preserveOrder: true,
-		pageClassName: "detail-settings-page",
+		pageClassName: "detail-settings-page editor-profiles-settings-page",
 		listClassName: "detail-settings-list",
 		infoAsDescription: true,
 		valueInTail: true,
 	});
+
+	const manager = getEditorProfiles();
+	if (manager) {
+		const row = editorProfilesRow({ manager,
+			dialog: async options => {
+				const { default: actionStack } = await import("lib/actionStack");
+				return editorProfileDialog({ ...options, actionStack });
+			},
+			refresh: () => {
+				page.hide();
+				const nextPage = editorSettings();
+				appSettings.uiSettings["editor-settings"] = nextPage;
+				nextPage.show();
+			},
+			exportToFolder: async payload => {
+				const [{ default: FileBrowser }, { default: fsOperation }, { default: Url }] = await Promise.all([
+					import("pages/fileBrowser"), import("fileSystem"), import("utils/Url"),
+				]);
+				let folder;
+				try { folder = await FileBrowser("folder", strings["select folder"]); } catch { return; }
+				if (folder?.url) await writeEditorProfileExport(folder.url, payload, fsOperation, Url.join);
+			},
+		});
+		page.insertAfterSection("resetEditorAppearance", row.element);
+		page.onClose(row.destroy);
+	}
+	return page;
 
 	/**
 	 * Callback for settings page when an item is clicked

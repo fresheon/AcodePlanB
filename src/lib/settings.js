@@ -267,6 +267,8 @@ class Settings {
 		this.value = structuredClone(this.#defaultSettings);
 	}
 
+	get defaults() { return structuredClone(this.#defaultSettings); }
+
 	async init() {
 		if (this.#initialized) return;
 		this.settingsFile = Url.join(DATA_STORAGE, "settings.json");

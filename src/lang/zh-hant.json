@@ -635,6 +635,7 @@
 	"settings-category-session": "會話",
 	"settings-category-support-acode": "支持 Acode",
 	"settings-category-text-layout": "文本與佈局",
+	"settings-category-font-presentation": "字體呈現",
 	"settings-info-app-animation": "控制應用內的過渡動畫。",
 	"settings-info-app-check-files": "當文件在外部被修改時刷新編輯器。",
 	"settings-info-app-clean-install-state": "清除安裝流程使用的存儲狀態。",
